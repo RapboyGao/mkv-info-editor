@@ -11,6 +11,7 @@ export const useAppStore = defineStore('app', {
     selectedFilePath: null as string | null,
     metadataPath: null as string | null,
     chapters: [] as Chapter[],
+    totalDuration: 100 * 3600, // 默认100小时，实际会被替换为真实时长
     
     // 状态管理
     isProcessing: false,
@@ -46,6 +47,11 @@ export const useAppStore = defineStore('app', {
     // 设置章节列表
     setChapters(chapters: Chapter[]) {
       this.chapters = chapters;
+    },
+    
+    // 设置总时长
+    setTotalDuration(duration: number) {
+      this.totalDuration = duration;
     },
     
     // 更新处理状态

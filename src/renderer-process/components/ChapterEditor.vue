@@ -96,17 +96,26 @@ const addChapter = () => {
   // 生成随机ID
   const generateId = () => Math.random().toString(36).substring(2, 10);
   
+  // 格式化时长为时间字符串
+  const formatDuration = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 1000);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+  };
+  
   if (appStore.chapters.length === 0) {
     // 如果没有章节，添加第一个章节
     appStore.chapters.push({
       id: generateId(),
       time: '00:00:00.000',
-      endTime: '100:00:00.000',
+      endTime: formatDuration(appStore.totalDuration),
       title: '新章节',
       originalTitle: '新章节',
       startTime: 0,
       startTimeSeconds: 0,
-      endTimeSeconds: 100 * 3600
+      endTimeSeconds: appStore.totalDuration
     });
   } else {
     // 获取最后一个章节
@@ -116,12 +125,12 @@ const addChapter = () => {
     appStore.chapters.push({
       id: generateId(),
       time: lastChapter.endTime,
-      endTime: '100:00:00.000',
+      endTime: formatDuration(appStore.totalDuration),
       title: '新章节',
       originalTitle: '新章节',
       startTime: lastChapter.endTimeSeconds * 1000, // 假设timebase为1000
       startTimeSeconds: lastChapter.endTimeSeconds,
-      endTimeSeconds: 100 * 3600
+      endTimeSeconds: appStore.totalDuration
     });
     
     // 更新上一个章节的结束时间

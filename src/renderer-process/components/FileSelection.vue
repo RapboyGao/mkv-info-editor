@@ -101,6 +101,8 @@ const parseChapters = async () => {
     
     // 1. 获取MKV文件总时长
     const totalDuration = await window.electronAPI.getMkvDuration(appStore.selectedFilePath);
+    // 更新总时长到store
+    appStore.setTotalDuration(totalDuration);
     
     appStore.setProcessingMessage('正在导出元数据...');
     // 2. 导出元数据
