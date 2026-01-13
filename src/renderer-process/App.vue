@@ -28,6 +28,28 @@
         </div>
       </el-card>
       
+      <!-- FFmpeg下载进度区域 -->
+      <el-card v-if="showDownloadProgress" class="download-progress-card" shadow="hover">
+        <template #header>
+          <div class="card-header">
+            <span>FFmpeg下载进度</span>
+          </div>
+        </template>
+        <div class="download-progress-content">
+          <el-progress 
+            :percentage="downloadProgress" 
+            :stroke-width="20" 
+            :show-text="true"
+            status="active"
+          >
+            <template #text>
+              <span>{{ downloadProgress }}%</span>
+            </template>
+          </el-progress>
+          <p class="download-description">正在下载FFmpeg，这可能需要几分钟时间...</p>
+        </div>
+      </el-card>
+      
       <!-- 章节编辑区域 -->
       <el-card v-if="chapters.length > 0" class="chapter-editor-card" shadow="hover">
         <template #header>
@@ -137,6 +159,8 @@ const message = ref<{ type: 'success' | 'error' | 'info' | 'warning'; text: stri
 const isProcessing = ref(false);
 const processingMessage = ref('');
 const logs = ref<string>('');
+const downloadProgress = ref<number>(0);
+const showDownloadProgress = ref<boolean>(false);
 
 // 类型声明，扩展window对象
 declare global {
@@ -165,6 +189,25 @@ const handleFFmpegLog = (event: Electron.IpcRendererEvent, logData: string) => {
   logs.value += logData;
 };
 
+// 处理FFmpeg下载进度
+const handleFFmpegDownloadProgress = (event: Electron.IpcRendererEvent, progress: number) => {
+  downloadProgress.value = progress;
+  showDownloadProgress.value = true;
+};
+
+// 处理FFmpeg下载完成
+const handleFFmpegDownloadComplete = () => {
+  downloadProgress.value = 0;
+  showDownloadProgress.value = false;
+};
+
+// 处理FFmpeg下载错误
+const handleFFmpegDownloadError = (event: Electron.IpcRendererEvent, errorMessage: string) => {
+  message.value = { type: 'error', text: `FFmpeg下载失败: ${errorMessage}` };
+  downloadProgress.value = 0;
+  showDownloadProgress.value = false;
+};
+
 // 清空日志
 const clearLogs = () => {
   logs.value = '';
@@ -173,11 +216,17 @@ const clearLogs = () => {
 // 组件挂载时注册IPC事件监听
 onMounted(() => {
   window.ipcRenderer.on('ffmpeg-log', handleFFmpegLog);
+  window.ipcRenderer.on('ffmpeg-download-progress', handleFFmpegDownloadProgress);
+  window.ipcRenderer.on('ffmpeg-download-complete', handleFFmpegDownloadComplete);
+  window.ipcRenderer.on('ffmpeg-download-error', handleFFmpegDownloadError);
 });
 
 // 组件卸载前移除IPC事件监听
 onBeforeUnmount(() => {
   window.ipcRenderer.off('ffmpeg-log', handleFFmpegLog);
+  window.ipcRenderer.off('ffmpeg-download-progress', handleFFmpegDownloadProgress);
+  window.ipcRenderer.off('ffmpeg-download-complete', handleFFmpegDownloadComplete);
+  window.ipcRenderer.off('ffmpeg-download-error', handleFFmpegDownloadError);
 });
 
 // 获取文件名
@@ -192,6 +241,10 @@ const selectFile = async () => {
     processingMessage.value = '正在选择文件...';
     clearLogs();
     
+    // 显示下载进度条
+    showDownloadProgress.value = true;
+    downloadProgress.value = 0;
+    
     // 下载FFmpeg（如果尚未下载）
     await window.electronAPI.downloadFFmpeg();
     
@@ -199,6 +252,7 @@ const selectFile = async () => {
     const filePath = await window.electronAPI.selectMkvFile();
     if (!filePath) {
       isProcessing.value = false;
+      showDownloadProgress.value = false;
       return;
     }
     
@@ -215,9 +269,11 @@ const selectFile = async () => {
     chapters.value = chaptersList;
     
     message.value = { type: 'success', text: '元数据导出成功，章节信息已加载' };
+    showDownloadProgress.value = false;
   } catch (error) {
     console.error('Error selecting file:', error);
     message.value = { type: 'error', text: `操作失败: ${error instanceof Error ? error.message : String(error)}` };
+    showDownloadProgress.value = false;
   } finally {
     isProcessing.value = false;
   }
@@ -298,7 +354,8 @@ const saveChanges = async () => {
 
 .file-selection-card,
 .chapter-editor-card,
-.logs-card {
+.logs-card,
+.download-progress-card {
   margin-bottom: 20px;
 }
 
@@ -367,5 +424,16 @@ const saveChanges = async () => {
   border-radius: 8px;
   padding: 40px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.download-progress-content {
+  padding: 10px 0;
+}
+
+.download-description {
+  margin-top: 10px;
+  text-align: center;
+  color: #606266;
+  font-size: 14px;
 }
 </style>

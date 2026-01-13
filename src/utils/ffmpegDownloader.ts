@@ -106,8 +106,10 @@ const downloadFFmpeg = async (window: Electron.BrowserWindow): Promise<string> =
         directory: appDataPath,
         filename: getFFmpegFilename(),
         onProgress: (progress) => {
-          // 可以通过IPC将进度发送给渲染进程
-          console.log(`Download progress: ${Math.round(progress.percent * 100)}%`);
+          // 通过IPC将进度发送给渲染进程
+          const progressPercent = Math.round(progress.percent * 100);
+          console.log(`Download progress: ${progressPercent}%`);
+          window.webContents.send('ffmpeg-download-progress', progressPercent);
         },
       });
       
@@ -122,9 +124,14 @@ const downloadFFmpeg = async (window: Electron.BrowserWindow): Promise<string> =
     // 复制FFmpeg到项目根目录的ffmpeg文件夹
     await copyFFmpegToProjectDir(ffmpegPath);
     
+    // 发送下载完成事件
+    window.webContents.send('ffmpeg-download-complete');
+    
     return ffmpegPath;
   } catch (error) {
     console.error('Failed to download FFmpeg:', error);
+    // 发送下载失败事件
+    window.webContents.send('ffmpeg-download-error', (error as Error).message);
     throw error;
   }
 };
