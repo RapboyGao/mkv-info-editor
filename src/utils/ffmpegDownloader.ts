@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import path from 'path';
 
 // FFmpeg下载镜像地址
-const FFMPEG_MIRROR_BASE_URL = 'https://registry.npmmirror.com/binary.html?path=ffmpeg-static/b6.1.1/';
+export const FFMPEG_MIRROR_BASE_URL = 'https://registry.npmmirror.com/binary.html?path=ffmpeg-static/b6.1.1/';
 
 // 根据平台获取对应的ffmpeg文件名
 const getFFmpegFilename = (): string => {
