@@ -27,17 +27,17 @@
       <div class="card-header">
         <span>FFmpeg执行日志</span>
         <el-button 
-          type="text" 
+          type="link" 
           @click="appStore.clearLogs" 
           size="small"
-          icon="el-icon-delete"
         >
+          <el-icon><Delete /></el-icon>
           清空日志
         </el-button>
       </div>
     </template>
     <el-scrollbar 
-      height="200px" 
+      height="30vh" 
       class="logs-scrollbar"
       ref="scrollbarElement"
     >
@@ -49,6 +49,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useAppStore } from '../stores/appStore';
+import { Delete } from '@element-plus/icons-vue';
 
 const appStore = useAppStore();
 const scrollbarElement = ref<any>(null);

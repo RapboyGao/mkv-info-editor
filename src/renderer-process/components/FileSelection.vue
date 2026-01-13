@@ -10,8 +10,8 @@
           type="primary" 
           @click="selectFile" 
           :loading="appStore.isProcessing"
-          icon="el-icon-folder-opened"
         >
+          <el-icon><FolderOpened /></el-icon>
           选择MKV文件
         </el-button>
       </el-empty>
@@ -30,15 +30,15 @@
                 type="primary" 
                 @click="parseChapters" 
                 :loading="appStore.isProcessing"
-                icon="el-icon-data-analysis"
               >
+                <el-icon><DataAnalysis /></el-icon>
                 解析章节信息
               </el-button>
               <el-button 
                 type="default" 
                 @click="appStore.setSelectedFilePath(null)"
-                icon="el-icon-refresh"
               >
+                <el-icon><Refresh /></el-icon>
                 重新选择
               </el-button>
             </div>
@@ -52,6 +52,7 @@
 <script setup lang="ts">
 import { useAppStore } from '../stores/appStore';
 import { ElMessage } from 'element-plus';
+import { FolderOpened, DataAnalysis, Refresh } from '@element-plus/icons-vue';
 
 const appStore = useAppStore();
 
@@ -130,17 +131,19 @@ const parseChapters = async () => {
 
 <style scoped>
 .file-selection {
-  max-width: 700px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 .file-info {
   margin-top: 20px;
+  width: 100%;
 }
 
 .file-path {
   word-break: break-all;
   color: #606266;
+  width: 100%;
 }
 
 .file-actions {

@@ -1,10 +1,10 @@
 <template>
-  <el-container class="app-container">
+  <div class="app-container">
     <el-header>
       <h1>MKV章节名称编辑器</h1>
     </el-header>
     
-    <el-main>
+    <div>
       <!-- 步骤指示器 -->
       <el-steps :active="appStore.currentStep" finish-status="success" align-center style="margin-bottom: 30px;">
         <el-step title="FFmpeg下载" description="下载FFmpeg工具" />
@@ -37,8 +37,8 @@
       
       <!-- 日志和进度显示 -->
       <LogsDisplay />
-    </el-main>
-  </el-container>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -112,7 +112,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .app-container {
   min-height: 100vh;
-  background-color: #f5f7fa;
 }
 
 .el-header {
@@ -122,6 +121,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
 }
 
 .el-header h1 {
@@ -133,14 +133,18 @@ onBeforeUnmount(() => {
 
 .el-main {
   padding: 20px;
-  margin: 0 auto;
+  flex: 1;
   width: 100%;
   box-sizing: border-box;
   position: relative;
+  margin: 0;
+  max-width: 100%;
 }
 
 .content-card {
   margin-bottom: 20px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .card-header {

@@ -17,8 +17,8 @@
           @click="downloadFFmpeg" 
           :loading="appStore.isProcessing" 
           size="large"
-          icon="el-icon-download"
         >
+          <el-icon><Download /></el-icon>
           {{ appStore.ffmpegDownloaded ? '重新下载FFmpeg' : '开始下载FFmpeg' }}
         </el-button>
       </div>
@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import { useAppStore } from '../stores/appStore';
 import { ElMessage } from 'element-plus';
-import { CircleCheck } from '@element-plus/icons-vue';
+import { CircleCheck, Download } from '@element-plus/icons-vue';
 import { onMounted } from 'vue';
 
 const appStore = useAppStore();
@@ -85,8 +85,8 @@ onMounted(() => {
 
 <style scoped>
 .download-info {
-  max-width: 600px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 .download-action {

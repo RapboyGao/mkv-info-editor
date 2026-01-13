@@ -5,27 +5,28 @@
         <h3>章节列表</h3>
         <el-button 
           type="primary" 
-          @click="addChapter" 
-          icon="el-icon-plus"
+          @click="addChapter"
         >
+          <el-icon><Plus /></el-icon>
           添加章节
         </el-button>
       </div>
       
-      <el-table :data="appStore.chapters" style="width: 100%" border :row-key="'id'">
-        <el-table-column prop="time" label="开始时间" width="180" />
-        <el-table-column prop="endTime" label="结束时间" width="180" />
-        <el-table-column prop="originalTitle" label="原始标题" min-width="200">
+      <el-table :data="appStore.chapters" style="width: 100%" border :row-key="'id'" fit>
+        <el-table-column prop="time" label="开始时间" width="180" align="center" />
+        <el-table-column prop="endTime" label="结束时间" width="180" align="center" />
+        <el-table-column prop="originalTitle" label="原始标题" min-width="200" show-overflow-tooltip>
           <template #default="scope">
             <div class="original-title">{{ scope.row.originalTitle }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="修改后标题" min-width="200">
+        <el-table-column prop="title" label="修改后标题" min-width="200" show-overflow-tooltip flex-grow="1">
           <template #default="scope">
             <el-input 
               v-model="scope.row.title" 
               placeholder="请输入章节标题"
               size="small"
+              style="width: 100%"
             />
             <el-divider style="margin: 5px 0" />
             <div 
@@ -36,15 +37,15 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="120" fixed="right" align="center">
           <template #default="scope">
             <el-button 
               type="danger" 
               size="small" 
-              icon="el-icon-delete" 
               @click="deleteChapter(scope.$index)"
               :disabled="appStore.chapters.length <= 1"
             >
+              <el-icon><Delete /></el-icon>
               删除
             </el-button>
           </template>
@@ -55,17 +56,17 @@
         <el-button 
           type="default" 
           @click="backToFileSelection"
-          icon="el-icon-back"
         >
+          <el-icon><Back /></el-icon>
           返回文件选择
         </el-button>
         <el-button 
           type="success" 
           @click="saveChanges" 
           :loading="appStore.isProcessing" 
-          icon="el-icon-check"
           size="large"
         >
+          <el-icon><Check /></el-icon>
           保存更改
         </el-button>
       </div>
@@ -76,6 +77,7 @@
 <script setup lang="ts">
 import { useAppStore } from '../stores/appStore';
 import { ElMessage } from 'element-plus';
+import { Plus, Delete, Back, Check } from '@element-plus/icons-vue';
 
 const appStore = useAppStore();
 

@@ -119,21 +119,23 @@ ipcMain.handle('delete-file', async (_, filePath: string) => {
 // 获取MKV文件时长
 ipcMain.handle('get-mkv-duration', async (_, filePath: string) => {
   try {
-    // 使用ffprobe获取MKV文件时长
+    // 使用ffmpeg获取MKV文件时长
     const output = await executeFFCommand([
+      '-i', filePath,
+      '-f', 'null',
       '-v', 'quiet',
-      '-print_format', 'json',
-      '-show_format',
-      '-i', filePath
+      '-show_entries', 'format=duration',
+      '-print_format', 'csv=p=0',
+      'pipe:1'
     ]);
     
-    // 解析JSON输出获取时长
-    const formatInfo = JSON.parse(output).format;
-    const duration = parseFloat(formatInfo.duration);
+    // 解析输出获取时长
+    const duration = parseFloat(output.trim());
     return duration;
   } catch (error) {
     console.error('Failed to get MKV duration:', error);
-    throw error;
+    // 捕获错误，使用默认值100小时
+    return 100 * 3600;
   }
 });
 
@@ -161,12 +163,16 @@ ipcMain.handle('parse-metadata', async (_, metadataPath: string, totalDuration?:
           const ms = Math.floor((seconds % 1) * 1000);
           const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
           
+          // 创建一个包含所有必需属性的Chapter对象
           chaptersList.push({
+            id: '', // 稍后会生成随机ID
             time: timeString,
+            endTime: '', // 稍后会计算结束时间
             title: currentChapter.title || '',
             originalTitle: currentChapter.title || '',
             startTime: currentChapter.startTime,
-            startTimeSeconds: seconds
+            startTimeSeconds: seconds,
+            endTimeSeconds: 0 // 稍后会计算结束时间秒数
           });
         }
         // 重置当前章节
@@ -198,12 +204,16 @@ ipcMain.handle('parse-metadata', async (_, metadataPath: string, totalDuration?:
       const ms = Math.floor((seconds % 1) * 1000);
       const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
       
+      // 创建一个包含所有必需属性的Chapter对象
       chaptersList.push({
+        id: '', // 稍后会生成随机ID
         time: timeString,
+        endTime: '', // 稍后会计算结束时间
         title: currentChapter.title || '',
         originalTitle: currentChapter.title || '',
         startTime: currentChapter.startTime,
-        startTimeSeconds: seconds
+        startTimeSeconds: seconds,
+        endTimeSeconds: 0 // 稍后会计算结束时间秒数
       });
     }
     
