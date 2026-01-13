@@ -13,7 +13,7 @@
       </div>
       
       <el-table :data="appStore.chapters" style="width: 100%" border :row-key="'id'" fit>
-        <el-table-column label="序号" width="60" align="center" type="index" :index="index => index + 1" />
+        <el-table-column label="序号" width="60" align="center" type="index" />
         <el-table-column prop="time" label="开始时间" width="180" align="center" />
         <el-table-column prop="endTime" label="结束时间" width="180" align="center" />
         <el-table-column prop="originalTitle" label="原始标题" min-width="200" show-overflow-tooltip>
