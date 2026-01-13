@@ -3,7 +3,7 @@ import path from 'node:path';
 import { spawn } from 'child_process';
 import fs from 'fs-extra';
 import started from 'electron-squirrel-startup';
-import { downloadFFmpeg, getFFmpegLocalPath } from './utils/ffmpegDownloader';
+import { downloadFFmpeg, getFFmpegLocalPath } from '../utils/ffmpegDownloader';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
