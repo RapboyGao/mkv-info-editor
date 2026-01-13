@@ -13,6 +13,7 @@
       </div>
       
       <el-table :data="appStore.chapters" style="width: 100%" border :row-key="'id'" fit>
+        <el-table-column label="序号" width="60" align="center" type="index" :index="index => index + 1" />
         <el-table-column prop="time" label="开始时间" width="180" align="center" />
         <el-table-column prop="endTime" label="结束时间" width="180" align="center" />
         <el-table-column prop="originalTitle" label="原始标题" min-width="200" show-overflow-tooltip>
@@ -167,9 +168,17 @@ const deleteChapter = (index: number) => {
       currentChapter.endTime = nextChapter.time;
       currentChapter.endTimeSeconds = nextChapter.startTimeSeconds;
     } else {
-      // 最后一个章节，结束时间设置为一个默认值（100小时）
-      currentChapter.endTime = '100:00:00.000';
-      currentChapter.endTimeSeconds = 100 * 3600;
+      // 最后一个章节，结束时间设置为MKV文件的总时长
+      const formatDuration = (seconds: number): string => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        const ms = Math.floor((seconds % 1) * 1000);
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+      };
+      
+      currentChapter.endTime = formatDuration(appStore.totalDuration);
+      currentChapter.endTimeSeconds = appStore.totalDuration;
     }
   }
 };
