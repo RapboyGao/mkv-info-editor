@@ -274,6 +274,7 @@ const handleFFmpegDownloadComplete = () => {
   showDownloadProgress.value = false;
   ffmpegDownloaded.value = true;
   currentStep.value = 1;
+  isProcessing.value = false; // 隐藏加载动画
   ElMessage({
     message: 'FFmpeg下载完成，已准备就绪！',
     type: 'success'

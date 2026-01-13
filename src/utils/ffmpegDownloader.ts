@@ -3,6 +3,7 @@ import { download } from 'electron-dl';
 import fs from 'fs-extra';
 import path from 'path';
 import sevenZip from '7zip-min';
+import { path7za } from '7zip-bin';
 
 // 根据平台获取对应的ffmpeg可执行文件名
 const getFFmpegExecutableName = (): string => {
@@ -100,19 +101,48 @@ const findFFmpegExecutable = async (extractDir: string): Promise<string> => {
   return executablePath;
 };
 
+// 配置7zip-min使用正确的7za路径
+const configure7Zip = () => {
+  // 获取当前工作目录
+  const cwd = process.cwd();
+  
+  // 获取系统架构和平台
+  const arch = process.arch;
+  let platform = process.platform;
+  let executableName = '7za';
+  
+  // 映射平台名称，因为process.platform返回'win32'但7zip-bin文件夹名为'win'
+  if (platform === 'win32') {
+    platform = 'win32';
+    executableName += '.exe';
+  }
+  
+  // 构建正确的7za路径
+  const correctPath = path.join(cwd, 'node_modules', '7zip-bin', platform, arch, executableName);
+  
+  console.log(`Configuring 7zip-min with 7za path: ${correctPath}`);
+  console.log(`Checking if file exists: ${fs.existsSync(correctPath)}`);
+  
+  // 配置7zip-min使用正确的路径
+  sevenZip.config({ binaryPath: correctPath });
+};
+
 // 解压7z文件
 const extract7zFile = async (archivePath: string, extractDir: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    sevenZip.unpack(archivePath, extractDir, (err: any) => {
-      if (err) {
-        console.error('7z extraction error:', err);
-        reject(err);
-      } else {
-        console.log('7z extraction complete');
-        resolve();
-      }
-    });
-  });
+  try {
+    console.log(`Starting 7z extraction: ${archivePath} -> ${extractDir}`);
+    
+    // 确保7zip-min已配置
+    configure7Zip();
+    
+    // 使用7zip-min解压
+    await sevenZip.unpack(archivePath, extractDir);
+    
+    console.log('7z extraction complete');
+  } catch (error) {
+    console.error('7z extraction error:', error);
+    throw error;
+  }
 };
 
 // 下载FFmpeg
