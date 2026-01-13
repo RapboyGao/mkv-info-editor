@@ -1,12 +1,5 @@
 import { defineStore } from 'pinia';
-
-// 类型声明
-interface Chapter {
-  time: string;
-  title: string;
-  originalTitle: string;
-  startTime: number;
-}
+import { Chapter } from '../../shared/types';
 
 export const useAppStore = defineStore('app', {
   state: () => ({

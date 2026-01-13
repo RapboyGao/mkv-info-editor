@@ -93,18 +93,23 @@ const parseChapters = async () => {
   if (!appStore.selectedFilePath) return;
   
   try {
-    appStore.setProcessing(true, '正在解析章节信息...');
+    appStore.setProcessing(true, '正在获取文件时长...');
     appStore.updateFFmpegProgress(0);
     
-    // 导出元数据
+    // 1. 获取MKV文件总时长
+    const totalDuration = await window.electronAPI.getMkvDuration(appStore.selectedFilePath);
+    
+    appStore.setProcessingMessage('正在导出元数据...');
+    // 2. 导出元数据
     const metadata = await window.electronAPI.exportMetadata(appStore.selectedFilePath);
     appStore.setMetadataPath(metadata);
     
-    // 解析元数据，提取章节信息
-    const chaptersList = await window.electronAPI.parseMetadata(metadata);
+    appStore.setProcessingMessage('正在解析章节信息...');
+    // 3. 解析元数据，提取章节信息，传递总时长
+    const chaptersList = await window.electronAPI.parseMetadata(metadata, totalDuration);
     appStore.setChapters(chaptersList);
     
-    // 进入下一步
+    // 4. 进入下一步
     appStore.setCurrentStep(2);
     ElMessage({
       message: `成功解析 ${chaptersList.length} 个章节！`,

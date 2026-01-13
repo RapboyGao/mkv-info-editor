@@ -1,8 +1,20 @@
 <template>
   <div class="step-content">
     <div class="chapter-editor">
-      <el-table :data="appStore.chapters" style="width: 100%" border>
+      <div class="editor-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>章节列表</h3>
+        <el-button 
+          type="primary" 
+          @click="addChapter" 
+          icon="el-icon-plus"
+        >
+          添加章节
+        </el-button>
+      </div>
+      
+      <el-table :data="appStore.chapters" style="width: 100%" border :row-key="'id'">
         <el-table-column prop="time" label="开始时间" width="180" />
+        <el-table-column prop="endTime" label="结束时间" width="180" />
         <el-table-column prop="originalTitle" label="原始标题" min-width="200">
           <template #default="scope">
             <div class="original-title">{{ scope.row.originalTitle }}</div>
@@ -22,6 +34,19 @@
             >
               <el-tag type="warning" size="small">已修改</el-tag>
             </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="scope">
+            <el-button 
+              type="danger" 
+              size="small" 
+              icon="el-icon-delete" 
+              @click="deleteChapter(scope.$index)"
+              :disabled="appStore.chapters.length <= 1"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -64,6 +89,80 @@ const getFileName = (path: string): string => {
   return path.split('/').pop() || path;
 };
 
+// 添加章节
+const addChapter = () => {
+  // 生成随机ID
+  const generateId = () => Math.random().toString(36).substring(2, 10);
+  
+  if (appStore.chapters.length === 0) {
+    // 如果没有章节，添加第一个章节
+    appStore.chapters.push({
+      id: generateId(),
+      time: '00:00:00.000',
+      endTime: '100:00:00.000',
+      title: '新章节',
+      originalTitle: '新章节',
+      startTime: 0,
+      startTimeSeconds: 0,
+      endTimeSeconds: 100 * 3600
+    });
+  } else {
+    // 获取最后一个章节
+    const lastChapter = appStore.chapters[appStore.chapters.length - 1];
+    
+    // 添加新章节，开始时间为上一个章节的结束时间
+    appStore.chapters.push({
+      id: generateId(),
+      time: lastChapter.endTime,
+      endTime: '100:00:00.000',
+      title: '新章节',
+      originalTitle: '新章节',
+      startTime: lastChapter.endTimeSeconds * 1000, // 假设timebase为1000
+      startTimeSeconds: lastChapter.endTimeSeconds,
+      endTimeSeconds: 100 * 3600
+    });
+    
+    // 更新上一个章节的结束时间
+    appStore.chapters[appStore.chapters.length - 2].endTime = lastChapter.endTime;
+  }
+  
+  // 按开始时间排序章节
+  appStore.chapters.sort((a, b) => a.startTime - b.startTime);
+};
+
+// 删除章节
+const deleteChapter = (index: number) => {
+  if (appStore.chapters.length <= 1) {
+    ElMessage({
+      message: '至少需要保留一个章节',
+      type: 'warning'
+    });
+    return;
+  }
+  
+  // 删除章节
+  appStore.chapters.splice(index, 1);
+  
+  // 按开始时间重新排序
+  appStore.chapters.sort((a, b) => a.startTime - b.startTime);
+  
+  // 更新相邻章节的时间
+  for (let i = 0; i < appStore.chapters.length; i++) {
+    const currentChapter = appStore.chapters[i];
+    const nextChapter = appStore.chapters[i + 1];
+    
+    if (nextChapter) {
+      // 如果有下一个章节，当前章节的结束时间就是下一个章节的开始时间
+      currentChapter.endTime = nextChapter.time;
+      currentChapter.endTimeSeconds = nextChapter.startTimeSeconds;
+    } else {
+      // 最后一个章节，结束时间设置为一个默认值（100小时）
+      currentChapter.endTime = '100:00:00.000';
+      currentChapter.endTimeSeconds = 100 * 3600;
+    }
+  }
+};
+
 // 保存更改
 const saveChanges = async () => {
   if (!appStore.selectedFilePath || !appStore.metadataPath) {
@@ -80,10 +179,13 @@ const saveChanges = async () => {
     
     // 更新元数据文件 - 将响应式对象转换为普通对象，避免IPC序列化错误
     const plainChapters = appStore.chapters.map(chapter => ({
+      id: chapter.id,
       time: chapter.time,
+      endTime: chapter.endTime,
       title: chapter.title,
       originalTitle: chapter.originalTitle,
-      startTime: chapter.startTime
+      startTime: chapter.startTime,
+      endTimeSeconds: chapter.endTimeSeconds
     }));
     const newMetadataPath = await window.electronAPI.updateMetadata(appStore.metadataPath, plainChapters);
     

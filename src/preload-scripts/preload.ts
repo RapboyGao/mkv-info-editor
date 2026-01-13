@@ -2,6 +2,7 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 import { contextBridge, ipcRenderer } from 'electron';
+import { Chapter } from '../shared/types';
 
 // 定义IPC通信接口
 export interface IpcApi {
@@ -13,6 +14,7 @@ export interface IpcApi {
   downloadFFmpeg: () => Promise<string>;
   exportMetadata: (inputPath: string) => Promise<string>;
   importMetadata: (inputPath: string, metadataPath: string, outputPath: string) => Promise<boolean>;
+  getMkvDuration: (filePath: string) => Promise<number>;
   
   // 文件内容操作
   readFile: (filePath: string) => Promise<string>;
@@ -20,8 +22,8 @@ export interface IpcApi {
   deleteFile: (filePath: string) => Promise<boolean>;
   
   // 元数据操作
-  parseMetadata: (metadataPath: string) => Promise<any[]>;
-  updateMetadata: (originalMetadataPath: string, chapters: any[]) => Promise<string>;
+  parseMetadata: (metadataPath: string, totalDuration?: number) => Promise<Chapter[]>;
+  updateMetadata: (originalMetadataPath: string, chapters: Chapter[]) => Promise<string>;
 }
 
 // 暴露API给渲染进程
@@ -35,6 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   exportMetadata: (inputPath: string) => ipcRenderer.invoke('export-metadata', inputPath),
   importMetadata: (inputPath: string, metadataPath: string, outputPath: string) => 
     ipcRenderer.invoke('import-metadata', inputPath, metadataPath, outputPath),
+  getMkvDuration: (filePath: string) => ipcRenderer.invoke('get-mkv-duration', filePath),
   
   // 文件内容操作
   readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
@@ -42,7 +45,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteFile: (filePath: string) => ipcRenderer.invoke('delete-file', filePath),
   
   // 元数据操作
-  parseMetadata: (metadataPath: string) => ipcRenderer.invoke('parse-metadata', metadataPath),
+  parseMetadata: (metadataPath: string, totalDuration?: number) => ipcRenderer.invoke('parse-metadata', metadataPath, totalDuration),
   updateMetadata: (originalMetadataPath: string, chapters: any[]) => ipcRenderer.invoke('update-metadata', originalMetadataPath, chapters),
 });
 

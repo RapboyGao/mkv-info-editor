@@ -8,10 +8,11 @@ declare global {
       downloadFFmpeg: () => Promise<string>;
       exportMetadata: (inputPath: string) => Promise<string>;
       importMetadata: (inputPath: string, metadataPath: string, outputPath: string) => Promise<boolean>;
+      getMkvDuration: (filePath: string) => Promise<number>;
       readFile: (filePath: string) => Promise<string>;
       writeFile: (filePath: string, content: string) => Promise<boolean>;
       deleteFile: (filePath: string) => Promise<boolean>;
-      parseMetadata: (metadataPath: string) => Promise<any[]>;
+      parseMetadata: (metadataPath: string, totalDuration?: number) => Promise<any[]>;
       updateMetadata: (originalMetadataPath: string, chapters: any[]) => Promise<string>;
     };
     ipcRenderer: {
