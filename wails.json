@@ -1,0 +1,10 @@
+{
+  "name": "mkv-info-editor",
+  "outputfilename": "mkv-info-editor",
+  "frontend": {
+    "dir": "./frontend",
+    "install": "pnpm install",
+    "build": "pnpm run build",
+    "dev": "pnpm run dev"
+  }
+}
