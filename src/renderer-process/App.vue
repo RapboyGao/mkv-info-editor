@@ -5,100 +5,178 @@
     </el-header>
     
     <el-main>
-      <!-- 文件选择区域 -->
-      <el-card class="file-selection-card" shadow="hover">
-        <template #header>
-          <div class="card-header">
-            <span>文件操作</span>
-          </div>
-        </template>
-        <div class="file-selection-content">
-          <el-button 
-            type="primary" 
-            @click="selectFile" 
-            :loading="isProcessing" 
-            :disabled="isProcessing"
-            icon="el-icon-document"
-          >
-            选择MKV文件
-          </el-button>
-          <el-tag v-if="selectedFilePath" type="info" class="selected-file-tag">
-            {{ getFileName(selectedFilePath) }}
-          </el-tag>
-        </div>
-      </el-card>
+      <!-- 步骤指示器 -->
+      <el-steps :active="currentStep" finish-status="success" align-center style="margin-bottom: 30px;">
+        <el-step title="FFmpeg下载" description="下载FFmpeg工具" />
+        <el-step title="选择文件" description="选择要编辑的MKV文件" />
+        <el-step title="编辑章节" description="编辑章节信息" />
+      </el-steps>
       
-      <!-- FFmpeg下载进度区域 -->
-      <el-card v-if="showDownloadProgress" class="download-progress-card" shadow="hover">
+      <!-- 步骤内容区域 -->
+      <el-card class="content-card" shadow="hover">
+        <!-- 动态头部 -->
         <template #header>
           <div class="card-header">
-            <span>FFmpeg下载进度</span>
-          </div>
-        </template>
-        <div class="download-progress-content">
-          <el-progress 
-            :percentage="downloadProgress" 
-            :stroke-width="20" 
-            :show-text="true"
-            status="active"
-          >
-            <template #text>
-              <span>{{ downloadProgress }}%</span>
-            </template>
-          </el-progress>
-          <p class="download-description">正在下载FFmpeg，这可能需要几分钟时间...</p>
-        </div>
-      </el-card>
-      
-      <!-- 章节编辑区域 -->
-      <el-card v-if="chapters.length > 0" class="chapter-editor-card" shadow="hover">
-        <template #header>
-          <div class="card-header">
-            <span>章节列表</span>
-            <el-badge :value="chapters.length" type="primary" class="chapter-count-badge" />
+            <span v-if="currentStep === 0">FFmpeg下载</span>
+            <span v-else-if="currentStep === 1">选择MKV文件</span>
+            <span v-else-if="currentStep === 2">章节编辑</span>
+            <el-badge 
+              v-if="currentStep === 2" 
+              :value="chapters.length" 
+              type="primary" 
+              class="chapter-count-badge" 
+            />
           </div>
         </template>
         
-        <el-table :data="chapters" style="width: 100%" border>
-          <el-table-column prop="time" label="开始时间" width="180" />
-          <el-table-column prop="originalTitle" label="原始标题" min-width="200">
-            <template #default="scope">
-              <div class="original-title">{{ scope.row.originalTitle }}</div>
-            </template>
-          </el-table-column>
-          <el-table-column prop="title" label="修改后标题" min-width="200">
-            <template #default="scope">
-              <el-input 
-                v-model="scope.row.title" 
-                placeholder="请输入章节标题"
-                size="small"
-              />
-              <el-divider style="margin: 5px 0" />
-              <div 
-                class="title-diff" 
-                v-if="scope.row.title !== scope.row.originalTitle"
+        <!-- 步骤1：FFmpeg下载 -->
+        <div v-if="currentStep === 0" class="step-content">
+          <div class="download-info">
+            <el-alert
+              title="FFmpeg是处理视频文件的必要工具"
+              type="info"
+              show-icon
+              :closable="false"
+              style="margin-bottom: 20px;"
+            >
+              本工具需要FFmpeg来解析和修改MKV文件的章节信息。首次使用时需要下载FFmpeg，这可能需要几分钟时间。
+            </el-alert>
+            
+            <div class="download-action">
+              <el-button 
+                type="primary" 
+                @click="downloadFFmpeg" 
+                :loading="isProcessing" 
+                size="large"
+                icon="el-icon-download"
               >
-                <el-tag type="warning" size="small">已修改</el-tag>
-              </div>
-            </template>
-          </el-table-column>
-        </el-table>
+                {{ ffmpegDownloaded ? '重新下载FFmpeg' : '开始下载FFmpeg' }}
+              </el-button>
+            </div>
+            
+            <el-progress 
+              v-if="showDownloadProgress" 
+              :percentage="downloadProgress" 
+              :stroke-width="20" 
+              :show-text="true"
+              status="active"
+              style="margin: 20px 0;"
+            >
+              <template #text>
+                <span>{{ downloadProgress }}%</span>
+              </template>
+            </el-progress>
+            
+            <div v-if="ffmpegDownloaded" class="download-success">
+              <el-icon class="success-icon"><CircleCheck /></el-icon>
+              <span>FFmpeg下载完成！</span>
+            </div>
+          </div>
+        </div>
         
-        <div class="action-buttons" style="margin-top: 20px; text-align: center;">
-          <el-button 
-            type="success" 
-            @click="saveChanges" 
-            :loading="isProcessing" 
-            :disabled="isProcessing"
-            icon="el-icon-check"
-          >
-            保存更改
-          </el-button>
+        <!-- 步骤2：选择文件 -->
+        <div v-else-if="currentStep === 1" class="step-content">
+          <div class="file-selection">
+            <el-empty 
+              v-if="!selectedFilePath" 
+              description="请选择要编辑的MKV文件"
+              image="el-icon-document"
+              image-size="120"
+            >
+              <el-button 
+                type="primary" 
+                @click="selectFile" 
+                :loading="isProcessing"
+                icon="el-icon-folder-opened"
+              >
+                选择MKV文件
+              </el-button>
+            </el-empty>
+            
+            <div v-else class="file-info">
+              <el-descriptions :column="1" border>
+                <el-descriptions-item label="文件名">
+                  <el-tag type="info">{{ getFileName(selectedFilePath) }}</el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="文件路径">
+                  <div class="file-path">{{ selectedFilePath }}</div>
+                </el-descriptions-item>
+                <el-descriptions-item label="操作">
+                  <div class="file-actions">
+                    <el-button 
+                      type="primary" 
+                      @click="parseChapters" 
+                      :loading="isProcessing"
+                      icon="el-icon-data-analysis"
+                    >
+                      解析章节信息
+                    </el-button>
+                    <el-button 
+                      type="default" 
+                      @click="selectedFilePath = null"
+                      icon="el-icon-refresh"
+                    >
+                      重新选择
+                    </el-button>
+                  </div>
+                </el-descriptions-item>
+              </el-descriptions>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 步骤3：编辑章节 -->
+        <div v-else-if="currentStep === 2" class="step-content">
+          <div class="chapter-editor">
+            <el-table :data="chapters" style="width: 100%" border>
+              <el-table-column prop="time" label="开始时间" width="180" />
+              <el-table-column prop="originalTitle" label="原始标题" min-width="200">
+                <template #default="scope">
+                  <div class="original-title">{{ scope.row.originalTitle }}</div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="title" label="修改后标题" min-width="200">
+                <template #default="scope">
+                  <el-input 
+                    v-model="scope.row.title" 
+                    placeholder="请输入章节标题"
+                    size="small"
+                  />
+                  <el-divider style="margin: 5px 0" />
+                  <div 
+                    class="title-diff" 
+                    v-if="scope.row.title !== scope.row.originalTitle"
+                  >
+                    <el-tag type="warning" size="small">已修改</el-tag>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+            
+            <div class="action-buttons" style="margin-top: 20px; text-align: center;">
+              <el-button 
+                type="default" 
+                @click="backToFileSelection"
+                icon="el-icon-back"
+              >
+                返回文件选择
+              </el-button>
+              <el-button 
+                type="success" 
+                @click="saveChanges" 
+                :loading="isProcessing" 
+                icon="el-icon-check"
+                size="large"
+              >
+                保存更改
+              </el-button>
+            </div>
+          </div>
         </div>
       </el-card>
       
-      <!-- 日志显示区域 -->
-      <el-card class="logs-card" shadow="hover">
+      <!-- FFmpeg执行日志 -->
+      <el-card v-if="logs" class="logs-card" shadow="hover">
         <template #header>
           <div class="card-header">
             <span>FFmpeg执行日志</span>
@@ -131,7 +209,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { ElMessage } from 'element-plus';
-import { Loading } from '@element-plus/icons-vue';
+import { Loading, CircleCheck } from '@element-plus/icons-vue';
 
 // 类型声明
 interface Chapter {
@@ -141,10 +219,16 @@ interface Chapter {
   startTime: number;
 }
 
+// 步骤状态
+const currentStep = ref<number>(0);
+const ffmpegDownloaded = ref<boolean>(false);
+
+// 文件和章节信息
 const selectedFilePath = ref<string | null>(null);
 const metadataPath = ref<string | null>(null);
 const chapters = ref<Chapter[]>([]);
-const message = ref<{ type: 'success' | 'error' | 'info' | 'warning'; text: string } | null>(null);
+
+// 状态管理
 const isProcessing = ref(false);
 const processingMessage = ref('');
 const logs = ref<string>('');
@@ -188,6 +272,12 @@ const handleFFmpegDownloadProgress = (event: Electron.IpcRendererEvent, progress
 const handleFFmpegDownloadComplete = () => {
   downloadProgress.value = 0;
   showDownloadProgress.value = false;
+  ffmpegDownloaded.value = true;
+  currentStep.value = 1;
+  ElMessage({
+    message: 'FFmpeg下载完成，已准备就绪！',
+    type: 'success'
+  });
 };
 
 // 处理FFmpeg下载错误
@@ -226,55 +316,97 @@ const getFileName = (path: string): string => {
   return path.split('/').pop() || path;
 };
 
-// 选择MKV文件
-const selectFile = async () => {
+// 下载FFmpeg
+const downloadFFmpeg = async () => {
   try {
     isProcessing.value = true;
-    processingMessage.value = '正在选择文件...';
+    processingMessage.value = '正在下载FFmpeg...';
     clearLogs();
     
     // 显示下载进度条
     showDownloadProgress.value = true;
     downloadProgress.value = 0;
     
-    // 下载FFmpeg（如果尚未下载）
+    // 下载FFmpeg
     await window.electronAPI.downloadFFmpeg();
+    
+    // 下载完成后会触发ffmpeg-download-complete事件，更新步骤
+  } catch (error) {
+    console.error('Error downloading FFmpeg:', error);
+    ElMessage({
+      message: `FFmpeg下载失败: ${error instanceof Error ? error.message : String(error)}`,
+      type: 'error'
+    });
+    showDownloadProgress.value = false;
+    isProcessing.value = false;
+  }
+};
+
+// 选择MKV文件
+const selectFile = async () => {
+  try {
+    isProcessing.value = true;
+    processingMessage.value = '正在选择文件...';
     
     // 选择MKV文件
     const filePath = await window.electronAPI.selectMkvFile();
     if (!filePath) {
       isProcessing.value = false;
-      showDownloadProgress.value = false;
       return;
     }
     
     selectedFilePath.value = filePath;
-    
-    // 导出元数据
-    processingMessage.value = '正在导出元数据...';
-    const metadata = await window.electronAPI.exportMetadata(filePath);
-    metadataPath.value = metadata;
-    
-    // 解析元数据，提取章节信息
-    processingMessage.value = '正在解析章节信息...';
-    const chaptersList = await window.electronAPI.parseMetadata(metadata);
-    chapters.value = chaptersList;
-    
     ElMessage({
-      message: '元数据导出成功，章节信息已加载',
+      message: '文件选择成功！',
       type: 'success'
     });
-    showDownloadProgress.value = false;
   } catch (error) {
     console.error('Error selecting file:', error);
     ElMessage({
-      message: `操作失败: ${error instanceof Error ? error.message : String(error)}`,
+      message: `文件选择失败: ${error instanceof Error ? error.message : String(error)}`,
       type: 'error'
     });
-    showDownloadProgress.value = false;
   } finally {
     isProcessing.value = false;
   }
+};
+
+// 解析章节信息
+const parseChapters = async () => {
+  if (!selectedFilePath.value) return;
+  
+  try {
+    isProcessing.value = true;
+    processingMessage.value = '正在解析章节信息...';
+    
+    // 导出元数据
+    const metadata = await window.electronAPI.exportMetadata(selectedFilePath.value);
+    metadataPath.value = metadata;
+    
+    // 解析元数据，提取章节信息
+    const chaptersList = await window.electronAPI.parseMetadata(metadata);
+    chapters.value = chaptersList;
+    
+    // 进入下一步
+    currentStep.value = 2;
+    ElMessage({
+      message: `成功解析 ${chaptersList.length} 个章节！`,
+      type: 'success'
+    });
+  } catch (error) {
+    console.error('Error parsing chapters:', error);
+    ElMessage({
+      message: `章节解析失败: ${error instanceof Error ? error.message : String(error)}`,
+      type: 'error'
+    });
+  } finally {
+    isProcessing.value = false;
+  }
+};
+
+// 返回文件选择
+const backToFileSelection = () => {
+  currentStep.value = 1;
 };
 
 // 保存更改
@@ -311,7 +443,7 @@ const saveChanges = async () => {
     await window.electronAPI.importMetadata(selectedFilePath.value, newMetadataPath, outputFilePath);
     
     ElMessage({
-      message: '章节信息已成功保存到新的MKV文件',
+      message: '章节信息已成功保存到新的MKV文件！',
       type: 'success'
     });
     
@@ -360,10 +492,7 @@ const saveChanges = async () => {
   position: relative;
 }
 
-.file-selection-card,
-.chapter-editor-card,
-.logs-card,
-.download-progress-card {
+.content-card, .logs-card {
   margin-bottom: 20px;
 }
 
@@ -373,19 +502,56 @@ const saveChanges = async () => {
   align-items: center;
 }
 
-.file-selection-content {
+.step-content {
+  padding: 20px 0;
+}
+
+/* 步骤1：FFmpeg下载 */
+.download-info {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.download-action {
+  text-align: center;
+  margin: 30px 0;
+}
+
+.download-success {
   display: flex;
   align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  color: #67c23a;
+  font-size: 18px;
+}
+
+.success-icon {
+  margin-right: 10px;
+  font-size: 24px;
+}
+
+/* 步骤2：选择文件 */
+.file-selection {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.file-info {
+  margin-top: 20px;
+}
+
+.file-path {
+  word-break: break-all;
+  color: #606266;
+}
+
+.file-actions {
+  display: flex;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
-.selected-file-tag {
-  flex: 1;
-  min-width: 200px;
-  max-width: 600px;
-}
-
+/* 步骤3：编辑章节 */
 .chapter-count-badge {
   margin-left: 10px;
 }
@@ -403,9 +569,11 @@ const saveChanges = async () => {
 .action-buttons {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 20px;
+  margin-top: 30px;
 }
 
+/* 日志区域 */
 .logs-scrollbar {
   background-color: #fafafa;
   border: 1px solid #ebeef5;
@@ -423,6 +591,7 @@ const saveChanges = async () => {
   word-break: break-all;
 }
 
+/* 加载动画 */
 .processing-overlay {
   position: fixed;
   top: 0;
@@ -454,16 +623,5 @@ const saveChanges = async () => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-.download-progress-content {
-  padding: 10px 0;
-}
-
-.download-description {
-  margin-top: 10px;
-  text-align: center;
-  color: #606266;
-  font-size: 14px;
 }
 </style>
