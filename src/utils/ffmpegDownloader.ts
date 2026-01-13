@@ -2,28 +2,26 @@ import { app } from 'electron';
 import { download } from 'electron-dl';
 import fs from 'fs-extra';
 import path from 'path';
+import sevenZip from '7zip-min';
 
 // 根据平台获取对应的ffmpeg可执行文件名
 const getFFmpegExecutableName = (): string => {
   return process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
 };
 
-// 获取FFmpeg下载URL - 使用static build直接下载
+// 获取FFmpeg下载URL
 const getFFmpegDownloadUrl = (): string => {
-  const executableName = getFFmpegExecutableName();
-  
-  // 根据平台返回不同的直接下载URL
+  // 根据平台返回不同的7z下载URL
   if (process.platform === 'win32') {
-    // Windows平台，使用直接的静态构建
-    return `https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/win32-x64/${executableName}`;
+    // Windows平台
+    return 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-essentials.7z';
   } else if (process.platform === 'darwin') {
     // macOS平台
-    return `https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/darwin-x64/${executableName}`;
-  } else if (process.platform === 'linux') {
-    // Linux平台
-    return `https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/linux-x64/${executableName}`;
+    return 'https://evermeet.cx/ffmpeg/ffmpeg-8.0.1.7z';
   } else {
-    throw new Error(`Unsupported platform: ${process.platform}`);
+    // Linux平台，使用之前的直接下载
+    const executableName = getFFmpegExecutableName();
+    return `https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/linux-x64/${executableName}`;
   }
 };
 
@@ -67,6 +65,56 @@ const copyFFmpegToProjectDir = async (sourcePath: string): Promise<string> => {
   return projectFFmpegPath;
 };
 
+// 查找解压后的FFmpeg可执行文件
+const findFFmpegExecutable = async (extractDir: string): Promise<string> => {
+  const executableName = getFFmpegExecutableName();
+  
+  // 递归查找可执行文件
+  const findExecutable = async (dir: string): Promise<string | null> => {
+    const files = await fs.readdir(dir);
+    
+    for (const file of files) {
+      const filePath = path.join(dir, file);
+      const stat = await fs.stat(filePath);
+      
+      if (stat.isFile() && file === executableName) {
+        return filePath;
+      }
+      
+      if (stat.isDirectory()) {
+        const foundPath = await findExecutable(filePath);
+        if (foundPath) {
+          return foundPath;
+        }
+      }
+    }
+    
+    return null;
+  };
+  
+  const executablePath = await findExecutable(extractDir);
+  if (!executablePath) {
+    throw new Error(`FFmpeg executable ${executableName} not found in extracted files`);
+  }
+  
+  return executablePath;
+};
+
+// 解压7z文件
+const extract7zFile = async (archivePath: string, extractDir: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    sevenZip.unpack(archivePath, extractDir, (err: any) => {
+      if (err) {
+        console.error('7z extraction error:', err);
+        reject(err);
+      } else {
+        console.log('7z extraction complete');
+        resolve();
+      }
+    });
+  });
+};
+
 // 下载FFmpeg
 const downloadFFmpeg = async (window: Electron.BrowserWindow): Promise<string> => {
   try {
@@ -84,10 +132,10 @@ const downloadFFmpeg = async (window: Electron.BrowserWindow): Promise<string> =
       // 确保appDataPath存在
       await fs.ensureDir(appDataPath);
       
-      // 直接下载FFmpeg可执行文件
+      // 下载FFmpeg文件
       const downloadResult = await download(window, downloadUrl, {
         directory: appDataPath,
-        filename: executableName,
+        filename: 'ffmpeg-archive.7z',
         onProgress: (progress) => {
           // 通过IPC将进度发送给渲染进程
           const progressPercent = Math.round(progress.percent * 100);
@@ -96,7 +144,31 @@ const downloadFFmpeg = async (window: Electron.BrowserWindow): Promise<string> =
         },
       });
       
-      ffmpegPath = downloadResult.getSavePath();
+      const downloadedFilePath = downloadResult.getSavePath();
+      
+      if (downloadUrl.endsWith('.7z')) {
+        // 处理7z文件
+        const extractTempDir = path.join(appDataPath, 'ffmpeg-extract');
+        await fs.ensureDir(extractTempDir);
+        
+        // 解压7z文件
+        await extract7zFile(downloadedFilePath, extractTempDir);
+        
+        // 查找FFmpeg可执行文件
+        const extractedExecutablePath = await findFFmpegExecutable(extractTempDir);
+        
+        // 移动到最终位置
+        ffmpegPath = getFFmpegLocalPath();
+        await fs.move(extractedExecutablePath, ffmpegPath, { overwrite: true });
+        
+        // 清理临时文件
+        await fs.remove(downloadedFilePath);
+        await fs.remove(extractTempDir);
+      } else {
+        // 直接下载的可执行文件
+        ffmpegPath = path.join(appDataPath, executableName);
+        await fs.move(downloadedFilePath, ffmpegPath, { overwrite: true });
+      }
       
       // 设置可执行权限（非Windows平台）
       if (process.platform !== 'win32') {
