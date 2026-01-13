@@ -13,7 +13,10 @@
     "resolveJsonModule": true,
     "jsx": "preserve",
     "strict": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": ["src/**/*", "src/**/*.vue", "forge.env.d.ts"]
 }
