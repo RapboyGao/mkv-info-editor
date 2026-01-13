@@ -4,7 +4,7 @@
       <el-empty 
         v-if="!appStore.selectedFilePath" 
         description="请选择要编辑的MKV文件"
-        image-size="120"
+        :image-size="120"
       >
         <el-button 
           type="primary" 

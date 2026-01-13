@@ -47,6 +47,7 @@
 import { useAppStore } from '../stores/appStore';
 import { ElMessage } from 'element-plus';
 import { CircleCheck } from '@element-plus/icons-vue';
+import { onMounted } from 'vue';
 
 const appStore = useAppStore();
 
@@ -73,6 +74,13 @@ const downloadFFmpeg = async () => {
     appStore.setProcessing(false);
   }
 };
+
+// 组件挂载时自动下载FFmpeg
+onMounted(() => {
+  if (!appStore.ffmpegDownloaded) {
+    downloadFFmpeg();
+  }
+});
 </script>
 
 <style scoped>
