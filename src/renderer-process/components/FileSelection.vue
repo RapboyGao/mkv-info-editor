@@ -75,16 +75,18 @@ const selectFile = async () => {
     
     appStore.setSelectedFilePath(filePath);
     ElMessage({
-      message: '文件选择成功！',
+      message: '文件选择成功，正在解析章节信息...',
       type: 'success'
     });
+    
+    // 选择文件后立即解析章节信息
+    await parseChapters();
   } catch (error) {
     console.error('Error selecting file:', error);
     ElMessage({
       message: `文件选择失败: ${error instanceof Error ? error.message : String(error)}`,
       type: 'error'
     });
-  } finally {
     appStore.setProcessing(false);
   }
 };
