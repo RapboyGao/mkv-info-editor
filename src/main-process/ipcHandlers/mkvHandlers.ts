@@ -60,6 +60,7 @@ const executeFFCommand = (args: string[], mainWindow: BrowserWindow | null): Pro
  * @returns 视频总时长（秒）
  */
 async function handleGetMkvDuration(filePath: string, mainWindow: BrowserWindow): Promise<number> {
+  console.log('handleGetMkvDuration called with filePath:', filePath);
   try {
     // 方法：直接解析ffmpeg -i命令的输出，添加null输出以避免错误
     // 构建命令，使用info级别输出以获取duration信息
@@ -67,7 +68,7 @@ async function handleGetMkvDuration(filePath: string, mainWindow: BrowserWindow)
       '-i',
       filePath,
       '-f',
-      'null', // 输出格式为null
+      'ffmetadata', // 输出格式为ffmetadata
       '-y', // 自动覆盖输出文件
       process.platform === 'win32' ? 'NUL' : '/dev/null', // 输出到空设备
       '-v',
@@ -78,14 +79,23 @@ async function handleGetMkvDuration(filePath: string, mainWindow: BrowserWindow)
     console.log('FFmpeg output:', output);
 
     // 从输出中提取时长信息
-    // 匹配格式：Duration: 02:29:46.37, start: 0.000000, bitrate: 32385 kb/s
-    // 使用更灵活的正则模式，支持不同位数的时长值
-    const durationMatch = output.match(/Duration:\s*(\d+):(\d+):(\d+)\.(\d+)/i);
+    // 改进的正则表达式：支持更灵活的格式，如Duration: 02:29:46.37, Duration: 02:29:46, Duration: 2:29:46.371等
+    const durationMatch = output.match(/Duration:\s*(\d+):(\d+):(\d+)(?:\.(\d+))?/i);
     if (durationMatch) {
-      const [, hours, minutes, seconds, milliseconds] = durationMatch;
-      // 计算总秒数
-      const totalSeconds = parseFloat(hours) * 3600 + parseFloat(minutes) * 60 + parseFloat(seconds) + parseFloat(milliseconds) / 100;
+      const [, hours, minutes, seconds, milliseconds = '0'] = durationMatch;
+      console.log('Duration match groups:', hours, minutes, seconds, milliseconds);
+      
+      // 计算总秒数：修复毫秒转换逻辑，根据实际位数计算
+      const totalSeconds = 
+        parseFloat(hours) * 3600 + 
+        parseFloat(minutes) * 60 + 
+        parseFloat(seconds) + 
+        parseFloat(milliseconds) / Math.pow(10, milliseconds.length);
+      
+      console.log('Calculated total seconds:', totalSeconds);
       return totalSeconds;
+    } else {
+      console.error('No duration match found in output:', output);
     }
 
     console.error('Failed to extract duration from FFmpeg output:', output);
