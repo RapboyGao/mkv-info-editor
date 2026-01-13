@@ -3,61 +3,43 @@ import { download } from 'electron-dl';
 import fs from 'fs-extra';
 import path from 'path';
 
-// FFmpeg下载镜像地址
-export const FFMPEG_MIRROR_BASE_URL = 'https://registry.npmmirror.com/binary.html?path=ffmpeg-static/b6.1.1/';
-
-// 根据平台获取对应的ffmpeg文件名
-const getFFmpegFilename = (): string => {
-  const platform = process.platform;
-  const arch = process.arch;
-  
-  let filename = 'ffmpeg-';
-  
-  switch (platform) {
-    case 'darwin':
-      filename += arch === 'arm64' ? 'darwin-arm64' : 'darwin-x64';
-      break;
-    case 'win32':
-      filename += 'win32-x64.exe';
-      break;
-    case 'linux':
-      if (arch === 'arm') {
-        filename += 'linux-arm';
-      } else if (arch === 'arm64') {
-        filename += 'linux-arm64';
-      } else if (arch === 'ia32') {
-        filename += 'linux-ia32';
-      } else {
-        filename += 'linux-x64';
-      }
-      break;
-    default:
-      throw new Error(`Unsupported platform: ${platform}`);
-  }
-  
-  return filename;
+// 根据平台获取对应的ffmpeg可执行文件名
+const getFFmpegExecutableName = (): string => {
+  return process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
 };
 
-// 获取FFmpeg下载URL
+// 获取FFmpeg下载URL - 使用static build直接下载
 const getFFmpegDownloadUrl = (): string => {
-  const filename = getFFmpegFilename();
-  // 注意：这里需要将URL中的binary.html?path=替换为直接的文件路径
-  return `https://registry.npmmirror.com/-/binary/ffmpeg-static/b6.1.1/${filename}`;
+  const executableName = getFFmpegExecutableName();
+  
+  // 根据平台返回不同的直接下载URL
+  if (process.platform === 'win32') {
+    // Windows平台，使用直接的静态构建
+    return `https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/win32-x64/${executableName}`;
+  } else if (process.platform === 'darwin') {
+    // macOS平台
+    return `https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/darwin-x64/${executableName}`;
+  } else if (process.platform === 'linux') {
+    // Linux平台
+    return `https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/linux-x64/${executableName}`;
+  } else {
+    throw new Error(`Unsupported platform: ${process.platform}`);
+  }
 };
 
 // 获取FFmpeg本地存储路径
 const getFFmpegLocalPath = (): string => {
   const appDataPath = app.getPath('userData');
-  const filename = getFFmpegFilename();
-  return path.join(appDataPath, filename);
+  const executableName = getFFmpegExecutableName();
+  return path.join(appDataPath, executableName);
 };
 
 // 获取项目根目录下的ffmpeg目录路径
 const getProjectFFmpegPath = (): string => {
   const projectRoot = path.join(__dirname, '../../../');
   const ffmpegDir = path.join(projectRoot, 'ffmpeg');
-  const filename = getFFmpegFilename();
-  return path.join(ffmpegDir, filename);
+  const executableName = getFFmpegExecutableName();
+  return path.join(ffmpegDir, executableName);
 };
 
 // 检查FFmpeg是否已下载
@@ -97,14 +79,15 @@ const downloadFFmpeg = async (window: Electron.BrowserWindow): Promise<string> =
     } else {
       const downloadUrl = getFFmpegDownloadUrl();
       const appDataPath = app.getPath('userData');
+      const executableName = getFFmpegExecutableName();
       
       // 确保appDataPath存在
       await fs.ensureDir(appDataPath);
       
-      // 下载FFmpeg
+      // 直接下载FFmpeg可执行文件
       const downloadResult = await download(window, downloadUrl, {
         directory: appDataPath,
-        filename: getFFmpegFilename(),
+        filename: executableName,
         onProgress: (progress) => {
           // 通过IPC将进度发送给渲染进程
           const progressPercent = Math.round(progress.percent * 100);
@@ -140,6 +123,5 @@ export {
   getFFmpegLocalPath,
   isFFmpegDownloaded,
   downloadFFmpeg,
-  getFFmpegFilename,
   getProjectFFmpegPath
 };
