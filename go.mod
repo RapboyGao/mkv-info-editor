@@ -1,6 +1,6 @@
 module mkvInfoEditor
 
-go 1.24.3
+go 1.25.0 //或更高版本
 
 require github.com/wailsapp/wails/v2 v2.11.0
 
