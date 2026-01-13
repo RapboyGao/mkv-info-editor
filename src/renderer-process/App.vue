@@ -117,32 +117,21 @@
         </el-scrollbar>
       </el-card>
       
-      <!-- 消息提示 -->
-      <el-message
-        v-if="message"
-        :type="message.type"
-        :show-close="true"
-        duration="5000"
-        center
-      >
-        {{ message.text }}
-      </el-message>
-      
       <!-- 加载动画 -->
-      <el-overlay :visible="isProcessing" :z-index="1000">
-        <template #default>
-          <div class="processing-indicator">
-            <el-spinner size="60px" type="pulse" />
-            <div style="margin-top: 20px;">{{ processingMessage }}</div>
-          </div>
-        </template>
-      </el-overlay>
+      <div v-if="isProcessing" class="processing-overlay">
+        <div class="processing-indicator">
+          <el-icon class="spinner-icon" size="60px"><Loading /></el-icon>
+          <div style="margin-top: 20px;">{{ processingMessage }}</div>
+        </div>
+      </div>
     </el-main>
   </el-container>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ElMessage } from 'element-plus';
+import { Loading } from '@element-plus/icons-vue';
 
 // 类型声明
 interface Chapter {
@@ -203,7 +192,10 @@ const handleFFmpegDownloadComplete = () => {
 
 // 处理FFmpeg下载错误
 const handleFFmpegDownloadError = (event: Electron.IpcRendererEvent, errorMessage: string) => {
-  message.value = { type: 'error', text: `FFmpeg下载失败: ${errorMessage}` };
+  ElMessage({
+    message: `FFmpeg下载失败: ${errorMessage}`,
+    type: 'error'
+  });
   downloadProgress.value = 0;
   showDownloadProgress.value = false;
 };
@@ -268,11 +260,17 @@ const selectFile = async () => {
     const chaptersList = await window.electronAPI.parseMetadata(metadata);
     chapters.value = chaptersList;
     
-    message.value = { type: 'success', text: '元数据导出成功，章节信息已加载' };
+    ElMessage({
+      message: '元数据导出成功，章节信息已加载',
+      type: 'success'
+    });
     showDownloadProgress.value = false;
   } catch (error) {
     console.error('Error selecting file:', error);
-    message.value = { type: 'error', text: `操作失败: ${error instanceof Error ? error.message : String(error)}` };
+    ElMessage({
+      message: `操作失败: ${error instanceof Error ? error.message : String(error)}`,
+      type: 'error'
+    });
     showDownloadProgress.value = false;
   } finally {
     isProcessing.value = false;
@@ -282,7 +280,10 @@ const selectFile = async () => {
 // 保存更改
 const saveChanges = async () => {
   if (!selectedFilePath.value || !metadataPath.value) {
-    message.value = { type: 'error', text: '请先选择MKV文件' };
+    ElMessage({
+      message: '请先选择MKV文件',
+      type: 'error'
+    });
     return;
   }
   
@@ -309,13 +310,19 @@ const saveChanges = async () => {
     processingMessage.value = '正在导入元数据到MKV文件...';
     await window.electronAPI.importMetadata(selectedFilePath.value, newMetadataPath, outputFilePath);
     
-    message.value = { type: 'success', text: '章节信息已成功保存到新的MKV文件' };
+    ElMessage({
+      message: '章节信息已成功保存到新的MKV文件',
+      type: 'success'
+    });
     
     // 清理临时文件
     await window.electronAPI.deleteFile(newMetadataPath);
   } catch (error) {
     console.error('Error saving changes:', error);
-    message.value = { type: 'error', text: `保存失败: ${error instanceof Error ? error.message : String(error)}` };
+    ElMessage({
+      message: `保存失败: ${error instanceof Error ? error.message : String(error)}`,
+      type: 'error'
+    });
   } finally {
     isProcessing.value = false;
   }
@@ -350,6 +357,7 @@ const saveChanges = async () => {
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
+  position: relative;
 }
 
 .file-selection-card,
@@ -415,6 +423,19 @@ const saveChanges = async () => {
   word-break: break-all;
 }
 
+.processing-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
 .processing-indicator {
   display: flex;
   flex-direction: column;
@@ -424,6 +445,15 @@ const saveChanges = async () => {
   border-radius: 8px;
   padding: 40px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.spinner-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .download-progress-content {
