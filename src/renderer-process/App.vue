@@ -424,8 +424,14 @@ const saveChanges = async () => {
     isProcessing.value = true;
     processingMessage.value = '正在生成新的元数据文件...';
     
-    // 更新元数据文件
-    const newMetadataPath = await window.electronAPI.updateMetadata(metadataPath.value, chapters.value);
+    // 更新元数据文件 - 将响应式对象转换为普通对象，避免IPC序列化错误
+    const plainChapters = chapters.value.map(chapter => ({
+      time: chapter.time,
+      title: chapter.title,
+      originalTitle: chapter.originalTitle,
+      startTime: chapter.startTime
+    }));
+    const newMetadataPath = await window.electronAPI.updateMetadata(metadataPath.value, plainChapters);
     
     // 选择输出文件路径
     processingMessage.value = '正在选择输出文件...';
