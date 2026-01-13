@@ -1,63 +1,142 @@
 <template>
-  <div class="app-container">
-    <h1>MKV章节名称编辑器</h1>
-    <div class="main-content">
-      <div class="file-selection">
-        <button @click="selectFile" class="btn-primary" :disabled="isProcessing">选择MKV文件</button>
-        <p v-if="selectedFilePath">已选择: {{ getFileName(selectedFilePath) }}</p>
-      </div>
-      
-      <div v-if="chapters.length > 0" class="chapter-editor">
-        <h2>章节列表</h2>
-        <div class="chapter-list">
-          <div 
-            v-for="(chapter, index) in chapters" 
-            :key="index" 
-            class="chapter-item"
-          >
-            <div class="chapter-time">{{ chapter.time }}</div>
-            <input 
-              type="text" 
-              v-model="chapter.title" 
-              class="chapter-title-input"
-              placeholder="章节标题"
-            />
+  <el-container class="app-container">
+    <el-header>
+      <h1>MKV章节名称编辑器</h1>
+    </el-header>
+    
+    <el-main>
+      <!-- 文件选择区域 -->
+      <el-card class="file-selection-card" shadow="hover">
+        <template #header>
+          <div class="card-header">
+            <span>文件操作</span>
           </div>
+        </template>
+        <div class="file-selection-content">
+          <el-button 
+            type="primary" 
+            @click="selectFile" 
+            :loading="isProcessing" 
+            :disabled="isProcessing"
+            icon="el-icon-document"
+          >
+            选择MKV文件
+          </el-button>
+          <el-tag v-if="selectedFilePath" type="info" class="selected-file-tag">
+            {{ getFileName(selectedFilePath) }}
+          </el-tag>
         </div>
+      </el-card>
+      
+      <!-- 章节编辑区域 -->
+      <el-card v-if="chapters.length > 0" class="chapter-editor-card" shadow="hover">
+        <template #header>
+          <div class="card-header">
+            <span>章节列表</span>
+            <el-badge :value="chapters.length" type="primary" class="chapter-count-badge" />
+          </div>
+        </template>
         
-        <div class="action-buttons">
-          <button @click="saveChanges" class="btn-primary" :disabled="isProcessing">保存更改</button>
+        <el-table :data="chapters" style="width: 100%" border>
+          <el-table-column prop="time" label="开始时间" width="180" />
+          <el-table-column prop="originalTitle" label="原始标题" min-width="200">
+            <template #default="scope">
+              <div class="original-title">{{ scope.row.originalTitle }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="title" label="修改后标题" min-width="200">
+            <template #default="scope">
+              <el-input 
+                v-model="scope.row.title" 
+                placeholder="请输入章节标题"
+                size="small"
+              />
+              <el-divider style="margin: 5px 0" />
+              <div 
+                class="title-diff" 
+                v-if="scope.row.title !== scope.row.originalTitle"
+              >
+                <el-tag type="warning" size="small">已修改</el-tag>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+        
+        <div class="action-buttons" style="margin-top: 20px; text-align: center;">
+          <el-button 
+            type="success" 
+            @click="saveChanges" 
+            :loading="isProcessing" 
+            :disabled="isProcessing"
+            icon="el-icon-check"
+          >
+            保存更改
+          </el-button>
         </div>
-      </div>
+      </el-card>
       
-      <div v-if="message" class="message {{ message.type }}">
+      <!-- 日志显示区域 -->
+      <el-card class="logs-card" shadow="hover">
+        <template #header>
+          <div class="card-header">
+            <span>FFmpeg执行日志</span>
+            <el-button 
+              type="text" 
+              @click="clearLogs" 
+              size="small"
+              icon="el-icon-delete"
+            >
+              清空日志
+            </el-button>
+          </div>
+        </template>
+        <el-scrollbar height="200px" class="logs-scrollbar">
+          <pre class="logs-content">{{ logs }}</pre>
+        </el-scrollbar>
+      </el-card>
+      
+      <!-- 消息提示 -->
+      <el-message
+        v-if="message"
+        :type="message.type"
+        :show-close="true"
+        duration="5000"
+        center
+      >
         {{ message.text }}
-      </div>
+      </el-message>
       
-      <div v-if="isProcessing" class="processing-indicator">
-        <div class="spinner"></div>
-        <p>{{ processingMessage }}</p>
-      </div>
-    </div>
-  </div>
+      <!-- 加载动画 -->
+      <el-overlay :visible="isProcessing" :z-index="1000">
+        <template #default>
+          <div class="processing-indicator">
+            <el-spinner size="60px" type="pulse" />
+            <div style="margin-top: 20px;">{{ processingMessage }}</div>
+          </div>
+        </template>
+      </el-overlay>
+    </el-main>
+  </el-container>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import fs from 'fs-extra';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 
+// 类型声明
 interface Chapter {
   time: string;
   title: string;
+  originalTitle: string;
   startTime: number;
 }
 
 const selectedFilePath = ref<string | null>(null);
 const metadataPath = ref<string | null>(null);
 const chapters = ref<Chapter[]>([]);
-const message = ref<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+const message = ref<{ type: 'success' | 'error' | 'info' | 'warning'; text: string } | null>(null);
 const isProcessing = ref(false);
 const processingMessage = ref('');
+const logs = ref<string>('');
 
 // 类型声明，扩展window对象
 declare global {
@@ -68,9 +147,38 @@ declare global {
       downloadFFmpeg: () => Promise<string>;
       exportMetadata: (inputPath: string) => Promise<string>;
       importMetadata: (inputPath: string, metadataPath: string, outputPath: string) => Promise<boolean>;
+      readFile: (filePath: string) => Promise<string>;
+      writeFile: (filePath: string, content: string) => Promise<boolean>;
+      deleteFile: (filePath: string) => Promise<boolean>;
+      parseMetadata: (metadataPath: string) => Promise<any[]>;
+      updateMetadata: (originalMetadataPath: string, chapters: any[]) => Promise<string>;
+    };
+    ipcRenderer: {
+      on: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => void;
+      off: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => void;
     };
   }
 }
+
+// 处理FFmpeg日志
+const handleFFmpegLog = (event: Electron.IpcRendererEvent, logData: string) => {
+  logs.value += logData;
+};
+
+// 清空日志
+const clearLogs = () => {
+  logs.value = '';
+};
+
+// 组件挂载时注册IPC事件监听
+onMounted(() => {
+  window.ipcRenderer.on('ffmpeg-log', handleFFmpegLog);
+});
+
+// 组件卸载前移除IPC事件监听
+onBeforeUnmount(() => {
+  window.ipcRenderer.off('ffmpeg-log', handleFFmpegLog);
+});
 
 // 获取文件名
 const getFileName = (path: string): string => {
@@ -82,6 +190,7 @@ const selectFile = async () => {
   try {
     isProcessing.value = true;
     processingMessage.value = '正在选择文件...';
+    clearLogs();
     
     // 下载FFmpeg（如果尚未下载）
     await window.electronAPI.downloadFFmpeg();
@@ -101,7 +210,9 @@ const selectFile = async () => {
     metadataPath.value = metadata;
     
     // 解析元数据，提取章节信息
-    await parseMetadata(metadata);
+    processingMessage.value = '正在解析章节信息...';
+    const chaptersList = await window.electronAPI.parseMetadata(metadata);
+    chapters.value = chaptersList;
     
     message.value = { type: 'success', text: '元数据导出成功，章节信息已加载' };
   } catch (error) {
@@ -110,60 +221,6 @@ const selectFile = async () => {
   } finally {
     isProcessing.value = false;
   }
-};
-
-// 解析元数据文件，提取章节信息
-const parseMetadata = async (metadataPath: string) => {
-  const content = await fs.readFile(metadataPath, 'utf-8');
-  const lines = content.split('\n');
-  
-  const chaptersList: Chapter[] = [];
-  let currentChapter: Partial<Chapter> = {};
-  
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    
-    if (trimmedLine.startsWith('[CHAPTER]')) {
-      // 新章节开始，保存之前的章节（如果有）
-      if (currentChapter.time && currentChapter.startTime !== undefined) {
-        chaptersList.push({
-          time: currentChapter.time,
-          title: currentChapter.title || '',
-          startTime: currentChapter.startTime
-        });
-      }
-      // 重置当前章节
-      currentChapter = {};
-    } else if (trimmedLine.startsWith('TIMEBASE=')) {
-      // 跳过TIMEBASE行
-      continue;
-    } else if (trimmedLine.startsWith('START=')) {
-      // 解析开始时间
-      const startTime = parseInt(trimmedLine.split('=')[1]);
-      currentChapter.startTime = startTime;
-      // 转换为HH:MM:SS.ms格式
-      const seconds = startTime / 1000;
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      const secs = Math.floor(seconds % 60);
-      const ms = Math.floor((seconds % 1) * 1000);
-      currentChapter.time = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
-    } else if (trimmedLine.startsWith('title=')) {
-      // 解析章节标题
-      currentChapter.title = trimmedLine.split('=')[1];
-    }
-  }
-  
-  // 保存最后一个章节
-  if (currentChapter.time && currentChapter.startTime !== undefined) {
-    chaptersList.push({
-      time: currentChapter.time,
-      title: currentChapter.title || '',
-      startTime: currentChapter.startTime
-    });
-  }
-  
-  chapters.value = chaptersList;
 };
 
 // 保存更改
@@ -177,13 +234,8 @@ const saveChanges = async () => {
     isProcessing.value = true;
     processingMessage.value = '正在生成新的元数据文件...';
     
-    // 生成新的元数据内容
-    const originalContent = await fs.readFile(metadataPath.value, 'utf-8');
-    const newContent = updateMetadataWithChapters(originalContent, chapters.value);
-    
-    // 保存新的元数据文件
-    const newMetadataPath = metadataPath.value + '.new';
-    await fs.writeFile(newMetadataPath, newContent, 'utf-8');
+    // 更新元数据文件
+    const newMetadataPath = await window.electronAPI.updateMetadata(metadataPath.value, chapters.value);
     
     // 选择输出文件路径
     processingMessage.value = '正在选择输出文件...';
@@ -192,6 +244,8 @@ const saveChanges = async () => {
     
     if (!outputFilePath) {
       isProcessing.value = false;
+      // 删除临时文件
+      await window.electronAPI.deleteFile(newMetadataPath);
       return;
     }
     
@@ -202,7 +256,7 @@ const saveChanges = async () => {
     message.value = { type: 'success', text: '章节信息已成功保存到新的MKV文件' };
     
     // 清理临时文件
-    await fs.unlink(newMetadataPath);
+    await window.electronAPI.deleteFile(newMetadataPath);
   } catch (error) {
     console.error('Error saving changes:', error);
     message.value = { type: 'error', text: `保存失败: ${error instanceof Error ? error.message : String(error)}` };
@@ -210,136 +264,108 @@ const saveChanges = async () => {
     isProcessing.value = false;
   }
 };
-
-// 更新元数据内容，替换章节标题
-const updateMetadataWithChapters = (originalContent: string, chapters: Chapter[]): string => {
-  const lines = originalContent.split('\n');
-  const newLines: string[] = [];
-  let chapterIndex = 0;
-  let inChapter = false;
-  
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    
-    if (trimmedLine.startsWith('[CHAPTER]')) {
-      inChapter = true;
-      newLines.push(line);
-    } else if (inChapter && trimmedLine.startsWith('title=')) {
-      // 更新章节标题
-      if (chapterIndex < chapters.length) {
-        newLines.push(`title=${chapters[chapterIndex].title}`);
-        chapterIndex++;
-      } else {
-        newLines.push(line);
-      }
-    } else if (inChapter && trimmedLine.startsWith('[') && trimmedLine.endsWith(']')) {
-      // 章节结束，遇到新的section
-      inChapter = false;
-      newLines.push(line);
-    } else {
-      newLines.push(line);
-    }
-  }
-  
-  return newLines.join('\n');
-};
 </script>
 
 <style scoped>
 .app-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  background-color: #f5f7fa;
 }
 
-h1 {
-  color: #333;
-  text-align: center;
-}
-
-.main-content {
-  margin-top: 30px;
-}
-
-.file-selection {
-  margin-bottom: 30px;
-  text-align: center;
-}
-
-.btn-primary {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-}
-
-.btn-primary:hover {
-  background-color: #45a049;
-}
-
-.chapter-editor {
-  background-color: #f5f5f5;
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.chapter-list {
-  margin-top: 20px;
-}
-
-.chapter-item {
+.el-header {
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0;
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
-  padding: 10px;
-  background-color: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  justify-content: center;
 }
 
-.chapter-time {
-  width: 120px;
-  font-weight: bold;
-  color: #666;
+.el-header h1 {
+  color: #303133;
+  font-size: 24px;
+  margin: 0;
+  padding: 20px 0;
 }
 
-.chapter-title-input {
+.el-main {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.file-selection-card,
+.chapter-editor-card,
+.logs-card {
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-selection-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.selected-file-tag {
   flex: 1;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  min-width: 200px;
+  max-width: 600px;
+}
+
+.chapter-count-badge {
+  margin-left: 10px;
+}
+
+.original-title {
+  font-style: italic;
+  color: #909399;
+  word-break: break-all;
+}
+
+.title-diff {
+  margin-top: 5px;
 }
 
 .action-buttons {
-  margin-top: 20px;
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
 
-.message {
-  margin-top: 20px;
-  padding: 10px;
+.logs-scrollbar {
+  background-color: #fafafa;
+  border: 1px solid #ebeef5;
   border-radius: 4px;
-  text-align: center;
 }
 
-.message.success {
-  background-color: #d4edda;
-  color: #155724;
+.logs-content {
+  margin: 0;
+  padding: 10px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #303133;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
-.message.error {
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-.message.info {
-  background-color: #d1ecf1;
-  color: #0c5460;
+.processing-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  padding: 40px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 </style>

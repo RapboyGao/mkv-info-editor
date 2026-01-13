@@ -15,5 +15,5 @@
     "strict": true,
     "types": ["vite/client"]
   },
-  "include": ["src/**/*", "src/**/*.vue"]
+  "include": ["src/**/*", "src/**/*.vue", "forge.env.d.ts"]
 }

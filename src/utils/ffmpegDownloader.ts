@@ -52,10 +52,37 @@ const getFFmpegLocalPath = (): string => {
   return path.join(appDataPath, filename);
 };
 
+// 获取项目根目录下的ffmpeg目录路径
+const getProjectFFmpegPath = (): string => {
+  const projectRoot = path.join(__dirname, '../../../');
+  const ffmpegDir = path.join(projectRoot, 'ffmpeg');
+  const filename = getFFmpegFilename();
+  return path.join(ffmpegDir, filename);
+};
+
 // 检查FFmpeg是否已下载
 const isFFmpegDownloaded = async (): Promise<boolean> => {
   const ffmpegPath = getFFmpegLocalPath();
   return await fs.pathExists(ffmpegPath);
+};
+
+// 复制FFmpeg到项目根目录的ffmpeg文件夹
+const copyFFmpegToProjectDir = async (sourcePath: string): Promise<string> => {
+  const projectFFmpegPath = getProjectFFmpegPath();
+  const ffmpegDir = path.dirname(projectFFmpegPath);
+  
+  // 确保ffmpeg目录存在
+  await fs.ensureDir(ffmpegDir);
+  
+  // 复制FFmpeg文件
+  await fs.copy(sourcePath, projectFFmpegPath, { overwrite: true });
+  
+  // 设置可执行权限（非Windows平台）
+  if (process.platform !== 'win32') {
+    await fs.chmod(projectFFmpegPath, 0o755);
+  }
+  
+  return projectFFmpegPath;
 };
 
 // 下载FFmpeg
@@ -63,32 +90,39 @@ const downloadFFmpeg = async (window: Electron.BrowserWindow): Promise<string> =
   try {
     // 检查FFmpeg是否已下载
     const alreadyDownloaded = await isFFmpegDownloaded();
+    let ffmpegPath;
+    
     if (alreadyDownloaded) {
-      return getFFmpegLocalPath();
+      ffmpegPath = getFFmpegLocalPath();
+    } else {
+      const downloadUrl = getFFmpegDownloadUrl();
+      const appDataPath = app.getPath('userData');
+      
+      // 确保appDataPath存在
+      await fs.ensureDir(appDataPath);
+      
+      // 下载FFmpeg
+      const downloadResult = await download(window, downloadUrl, {
+        directory: appDataPath,
+        filename: getFFmpegFilename(),
+        onProgress: (progress) => {
+          // 可以通过IPC将进度发送给渲染进程
+          console.log(`Download progress: ${Math.round(progress.percent * 100)}%`);
+        },
+      });
+      
+      ffmpegPath = downloadResult.getSavePath();
+      
+      // 设置可执行权限（非Windows平台）
+      if (process.platform !== 'win32') {
+        await fs.chmod(ffmpegPath, 0o755);
+      }
     }
     
-    const downloadUrl = getFFmpegDownloadUrl();
-    const appDataPath = app.getPath('userData');
+    // 复制FFmpeg到项目根目录的ffmpeg文件夹
+    await copyFFmpegToProjectDir(ffmpegPath);
     
-    // 确保appDataPath存在
-    await fs.ensureDir(appDataPath);
-    
-    // 下载FFmpeg
-    const downloadResult = await download(window, downloadUrl, {
-      directory: appDataPath,
-      filename: getFFmpegFilename(),
-      onProgress: (progress) => {
-        // 可以通过IPC将进度发送给渲染进程
-        console.log(`Download progress: ${Math.round(progress.percent * 100)}%`);
-      },
-    });
-    
-    // 设置可执行权限（非Windows平台）
-    if (process.platform !== 'win32') {
-      await fs.chmod(downloadResult.getSavePath(), 0o755);
-    }
-    
-    return downloadResult.getSavePath();
+    return ffmpegPath;
   } catch (error) {
     console.error('Failed to download FFmpeg:', error);
     throw error;
@@ -100,4 +134,5 @@ export {
   isFFmpegDownloaded,
   downloadFFmpeg,
   getFFmpegFilename,
+  getProjectFFmpegPath
 };
