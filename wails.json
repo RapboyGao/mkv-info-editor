@@ -4,7 +4,11 @@
   "frontend": {
     "dir": "./frontend",
     "install": "pnpm install",
-    "build": "pnpm run build",
-    "dev": "pnpm run dev"
+    "build": "pnpm run build:frontend",
+    "dev": "pnpm run dev:frontend",
+    "devURL": "http://localhost:5173"
+  },
+  "debug": {
+    "openInspectorOnStartup": false
   }
 }
