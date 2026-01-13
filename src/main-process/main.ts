@@ -122,6 +122,7 @@ ipcMain.handle('parse-metadata', async (_, metadataPath: string) => {
     
     const chaptersList: any[] = [];
     let currentChapter: any = {};
+    let timebase = 1000; // 默认时间基准为毫秒
     
     for (const line of lines) {
       const trimmedLine = line.trim();
@@ -139,14 +140,19 @@ ipcMain.handle('parse-metadata', async (_, metadataPath: string) => {
         // 重置当前章节
         currentChapter = {};
       } else if (trimmedLine.startsWith('TIMEBASE=')) {
-        // 跳过TIMEBASE行
-        continue;
+        // 解析TIMEBASE，格式为 "num/den"，例如 "1/1000" 表示毫秒
+        const timebaseStr = trimmedLine.split('=')[1];
+        const [num, den] = timebaseStr.split('/').map(Number);
+        // 计算实际时间基数：例如 1/1000 = 0.001秒 = 1毫秒
+        // 我们需要转换为每秒的单位数，所以用分母除以分子
+        timebase = den / num;
       } else if (trimmedLine.startsWith('START=')) {
         // 解析开始时间
         const startTime = parseInt(trimmedLine.split('=')[1]);
         currentChapter.startTime = startTime;
+        // 根据TIMEBASE转换为秒
+        const seconds = startTime / timebase;
         // 转换为HH:MM:SS.ms格式
-        const seconds = startTime / 1000;
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         const secs = Math.floor(seconds % 60);

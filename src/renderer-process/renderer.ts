@@ -3,6 +3,7 @@
  */
 
 import { createApp } from 'vue';
+import { createPinia } from 'pinia';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
@@ -11,6 +12,10 @@ import App from './App.vue';
 
 // 创建Vue应用实例
 const app = createApp(App);
+
+// 创建并使用Pinia
+const pinia = createPinia();
+app.use(pinia);
 
 // 使用ElementPlus
 app.use(ElementPlus);
