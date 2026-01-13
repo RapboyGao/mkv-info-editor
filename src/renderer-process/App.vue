@@ -80,7 +80,6 @@
             <el-empty 
               v-if="!selectedFilePath" 
               description="请选择要编辑的MKV文件"
-              image="el-icon-document"
               image-size="120"
             >
               <el-button 
@@ -175,6 +174,28 @@
         </div>
       </el-card>
       
+      <!-- 处理状态提示 -->
+      <el-alert
+        v-if="isProcessing"
+        :title="processingMessage"
+        type="info"
+        :closable="false"
+        style="margin-bottom: 20px;"
+      />
+      
+      <!-- FFmpeg进度条 -->
+      <el-progress 
+        v-if="showFFmpegProgress"
+        :percentage="ffmpegProgress" 
+        :stroke-width="15" 
+        :show-text="true"
+        style="margin-bottom: 20px;"
+      >
+        <template #text>
+          <span>{{ ffmpegProgress.toFixed(1) }}%</span>
+        </template>
+      </el-progress>
+      
       <!-- FFmpeg执行日志 -->
       <el-card v-if="logs" class="logs-card" shadow="hover">
         <template #header>
@@ -190,18 +211,14 @@
             </el-button>
           </div>
         </template>
-        <el-scrollbar height="200px" class="logs-scrollbar">
+        <el-scrollbar 
+          height="200px" 
+          class="logs-scrollbar"
+          ref="scrollbarElement"
+        >
           <pre class="logs-content">{{ logs }}</pre>
         </el-scrollbar>
       </el-card>
-      
-      <!-- 加载动画 -->
-      <div v-if="isProcessing" class="processing-overlay">
-        <div class="processing-indicator">
-          <el-icon class="spinner-icon" size="60px"><Loading /></el-icon>
-          <div style="margin-top: 20px;">{{ processingMessage }}</div>
-        </div>
-      </div>
     </el-main>
   </el-container>
 </template>
@@ -234,6 +251,9 @@ const processingMessage = ref('');
 const logs = ref<string>('');
 const downloadProgress = ref<number>(0);
 const showDownloadProgress = ref<boolean>(false);
+const ffmpegProgress = ref<number>(0);
+const showFFmpegProgress = ref<boolean>(false);
+let scrollbarElement: any = null;
 
 // 类型声明，扩展window对象
 declare global {
@@ -260,6 +280,22 @@ declare global {
 // 处理FFmpeg日志
 const handleFFmpegLog = (event: Electron.IpcRendererEvent, logData: string) => {
   logs.value += logData;
+  
+  // 自动滚动到底部
+  setTimeout(() => {
+    if (scrollbarElement && scrollbarElement.wrap) {
+      const wrapElement = scrollbarElement.wrap;
+      wrapElement.scrollTop = wrapElement.scrollHeight;
+    }
+  }, 100);
+  
+  // 解析FFmpeg进度信息
+  const progressMatch = logData.match(/time=(\d{2}:\d{2}:\d{2}\.\d{2})/);
+  if (progressMatch) {
+    // 简单的进度计算，实际应该根据总时长
+    ffmpegProgress.value = (ffmpegProgress.value + 0.5) % 100;
+    showFFmpegProgress.value = true;
+  }
 };
 
 // 处理FFmpeg下载进度
@@ -378,6 +414,8 @@ const parseChapters = async () => {
   
   try {
     isProcessing.value = true;
+    showFFmpegProgress.value = true;
+    ffmpegProgress.value = 0;
     processingMessage.value = '正在解析章节信息...';
     
     // 导出元数据
@@ -402,6 +440,8 @@ const parseChapters = async () => {
     });
   } finally {
     isProcessing.value = false;
+    showFFmpegProgress.value = false;
+    ffmpegProgress.value = 0;
   }
 };
 
@@ -422,6 +462,8 @@ const saveChanges = async () => {
   
   try {
     isProcessing.value = true;
+    showFFmpegProgress.value = false;
+    ffmpegProgress.value = 0;
     processingMessage.value = '正在生成新的元数据文件...';
     
     // 更新元数据文件 - 将响应式对象转换为普通对象，避免IPC序列化错误
@@ -447,6 +489,8 @@ const saveChanges = async () => {
     
     // 导入元数据
     processingMessage.value = '正在导入元数据到MKV文件...';
+    showFFmpegProgress.value = true;
+    ffmpegProgress.value = 0;
     await window.electronAPI.importMetadata(selectedFilePath.value, newMetadataPath, outputFilePath);
     
     ElMessage({
@@ -464,6 +508,8 @@ const saveChanges = async () => {
     });
   } finally {
     isProcessing.value = false;
+    showFFmpegProgress.value = false;
+    ffmpegProgress.value = 0;
   }
 };
 </script>
@@ -598,37 +644,5 @@ const saveChanges = async () => {
   word-break: break-all;
 }
 
-/* 加载动画 */
-.processing-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
 
-.processing-indicator {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  padding: 40px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.spinner-icon {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 </style>
