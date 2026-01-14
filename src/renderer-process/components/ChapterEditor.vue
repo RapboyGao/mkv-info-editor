@@ -38,11 +38,14 @@
           </template>
         </el-table-column>
         <el-table-column
-          prop="endTime"
           label="结束时间"
           width="180"
           align="center"
-        />
+        >
+          <template #default="scope">
+            {{ chapterInstances[scope.$index].endTime }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="originalTitle"
           label="原始标题"
@@ -111,12 +114,19 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { useAppStore } from "../stores/appStore";
 import { ElMessage } from "element-plus";
 import { Plus, Delete, Back, Check } from "@element-plus/icons-vue";
 import ChapterStartTimeEditor from "./ChapterStartTimeEditor.vue";
+import { Chapter } from "../../shared/types";
 
 const appStore = useAppStore();
+
+// 创建Chapter实例数组，用于访问计算属性
+const chapterInstances = computed(() => {
+  return appStore.chapters.map(chapter => new Chapter(chapter));
+});
 
 // 返回文件选择
 const backToFileSelection = () => {
