@@ -1,9 +1,10 @@
-import { BrowserWindow, app, ipcMain } from "electron";
+import { ChapterData, MKVProgress, MkvFile, MkvFileData } from "@/shared";
 import { spawn } from "child_process";
+import { BrowserWindow, app, ipcMain } from "electron";
+import fs from "fs-extra";
 import path from "node:path";
 import { getFFmpegLocalPath } from "../utils/ffmpegDownloader";
-import { MkvFileData, ChapterData, MkvFile, MKVProgress } from "@/shared";
-import fs from "fs-extra";
+import { TASKS, addMkvTask, clearAllMkvTasks, deleteMkvTask, getMkvTask, notifyTasksChanged } from "../utils/mkvTasks";
 
 // 解析FFmpeg进度信息
 function parseFFmpegProgress(outputLine: string, outputPath: string): MKVProgress | null {
@@ -312,26 +313,48 @@ async function handleGenerateMkvFile(
     // 写入临时元数据文件
     await fs.writeFile(metadataPath, fullMetadata, "utf-8");
 
-    // 运行FFmpeg命令导入元数据
-    await executeFFCommand(
-      [
-        "-i", inputPath,
-        "-i", metadataPath,
-        "-map", "0", // 映射所有原始流（音轨、字幕等）
-        "-map_metadata", "1", // 从元数据文件映射全局元数据（覆盖原始全局元数据）
-        "-map_chapters", "1", // 从元数据文件映射章节（覆盖原始章节）
-        "-c", "copy", // 复制所有流，不重新编码
-        "-y", // 自动覆盖输出文件
-        outputPath,
-      ],
-      mainWindow,
-      outputPath // 传递outputPath给executeFFCommand，用于进度报告
-    );
+    // 添加到任务列表
+    const task = addMkvTask(mkvFileData, mainWindow);
+    
+    // 更新任务状态为处理中
+    task.updateStatus('processing');
+    notifyTasksChanged(mainWindow);
 
-    // 清理临时文件
-    await fs.unlink(metadataPath).catch((error) => {
-      console.warn("Failed to delete temporary metadata file:", error);
-    });
+    try {
+      // 运行FFmpeg命令导入元数据
+      await executeFFCommand(
+        [
+          "-i", inputPath,
+          "-i", metadataPath,
+          "-map", "0", // 映射所有原始流（音轨、字幕等）
+          "-map_metadata", "1", // 从元数据文件映射全局元数据（覆盖原始全局元数据）
+          "-map_chapters", "1", // 从元数据文件映射章节（覆盖原始章节）
+          "-c", "copy", // 复制所有流，不重新编码
+          "-y", // 自动覆盖输出文件
+          outputPath,
+        ],
+        mainWindow,
+        outputPath // 传递outputPath给executeFFCommand，用于进度报告
+      );
+      
+      // 更新任务状态为已完成
+      task.updateStatus('completed', outputPath);
+      notifyTasksChanged(mainWindow);
+    } catch (error) {
+      // 更新任务状态为失败
+      task.updateStatus(
+        'failed', 
+        undefined, 
+        error instanceof Error ? error.message : String(error)
+      );
+      notifyTasksChanged(mainWindow);
+      throw error;
+    } finally {
+      // 清理临时文件
+      await fs.unlink(metadataPath).catch((error) => {
+        console.warn("Failed to delete temporary metadata file:", error);
+      });
+    }
 
     return true;
   } catch (error) {
@@ -362,4 +385,25 @@ export function registerMKVHandlers(mainWindow: BrowserWindow) {
       );
     }
   );
+
+  // 获取所有MKV任务
+  ipcMain.handle("get-all-mkv-tasks", async () => {
+    return TASKS.values;
+  });
+
+  // 获取单个MKV任务
+  ipcMain.handle("get-mkv-task", async (_, taskId: string) => {
+    return getMkvTask(taskId);
+  });
+
+  // 删除MKV任务
+  ipcMain.handle("delete-mkv-task", async (_, taskId: string) => {
+    return deleteMkvTask(taskId);
+  });
+
+  // 清除所有MKV任务
+  ipcMain.handle("clear-all-mkv-tasks", async () => {
+    clearAllMkvTasks();
+    return true;
+  });
 }
