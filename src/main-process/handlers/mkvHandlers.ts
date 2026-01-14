@@ -277,8 +277,6 @@ async function handleGenerateMkvFile(
         "-i", metadataPath,
         "-map", "0", // 映射所有原始流（音轨、字幕等）
         "-map_metadata", "1", // 从元数据文件映射全局元数据（覆盖原始全局元数据）
-        "-map_metadata", "0:s", // 从原始文件映射每个流的元数据（保留原始流元数据）
-        "-map_metadata", "0:d", // 从原始文件映射每个数据块的元数据（保留原始数据块元数据）
         "-map_chapters", "1", // 从元数据文件映射章节（覆盖原始章节）
         "-c", "copy", // 复制所有流，不重新编码
         "-y", // 自动覆盖输出文件
