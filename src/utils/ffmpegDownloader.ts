@@ -103,7 +103,7 @@ const findFFmpegExecutable = async (extractDir: string): Promise<string> => {
 };
 
 // 配置7zip-min使用正确的7za路径
-const configure7Zip = () => {
+const configure7Zip = async () => {
   // 获取当前工作目录
   const cwd = process.cwd();
 
@@ -112,10 +112,13 @@ const configure7Zip = () => {
   let platform: string = process.platform;
   let executableName = "7za";
 
-  // 映射平台名称，因为process.platform返回'win32'但7zip-bin文件夹名为'win'
+  // 映射平台名称，因为process.platform返回不同值但7zip-bin文件夹名称不同
   if (platform === "win32") {
     platform = "win";
     executableName += ".exe";
+  } else if (platform === "darwin") {
+    // macOS平台，process.platform返回'darwin'但7zip-bin文件夹名为'mac'
+    platform = "mac";
   }
 
   // 构建正确的7za路径
@@ -131,6 +134,12 @@ const configure7Zip = () => {
   console.log(`Configuring 7zip-min with 7za path: ${correctPath}`);
   console.log(`Checking if file exists: ${fs.existsSync(correctPath)}`);
 
+  // 确保7za有执行权限
+  if (process.platform !== "win32") {
+    // 非Windows平台需要执行权限
+    await fs.chmod(correctPath, 0o755);
+  }
+
   // 配置7zip-min使用正确的路径
   sevenZip.config({ binaryPath: correctPath });
 };
@@ -144,7 +153,7 @@ const extract7zFile = async (
     console.log(`Starting 7z extraction: ${archivePath} -> ${extractDir}`);
 
     // 确保7zip-min已配置
-    configure7Zip();
+  await configure7Zip();
 
     // 使用7zip-min解压
     await sevenZip.unpack(archivePath, extractDir);
