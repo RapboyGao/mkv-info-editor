@@ -97,6 +97,11 @@ export const useAppStore = defineStore('app', {
     resetFFmpegProgress() {
       this.ffmpegProgress = 0;
       this.showFFmpegProgress = false;
+    },
+    
+    // 更新MKV文件的进度信息
+    updateMkvFileProgress(progress: any) {
+      this.mkvFile.progress = progress;
     }
   }
 });

@@ -70,12 +70,19 @@ const handleFFmpegDownloadError = (event: Electron.IpcRendererEvent, errorMessag
   appStore.hideDownloadProgress();
 };
 
+// 处理FFmpeg进度更新
+const handleFFmpegProgress = (event: any, progress: any) => {
+  // 更新当前mkvFile的progress属性
+  appStore.updateMkvFileProgress(progress);
+};
+
 // 组件挂载时注册IPC事件监听
 onMounted(() => {
   window.ipcRenderer.on('ffmpeg-log', handleFFmpegLog);
   window.ipcRenderer.on('ffmpeg-download-progress', handleFFmpegDownloadProgress);
   window.ipcRenderer.on('ffmpeg-download-complete', handleFFmpegComplete);
   window.ipcRenderer.on('ffmpeg-download-error', handleFFmpegDownloadError);
+  window.ipcRenderer.on('ffmpeg-progress', handleFFmpegProgress);
 });
 
 // 组件卸载前移除IPC事件监听
@@ -84,6 +91,7 @@ onBeforeUnmount(() => {
   window.ipcRenderer.off('ffmpeg-download-progress', handleFFmpegDownloadProgress);
   window.ipcRenderer.off('ffmpeg-download-complete', handleFFmpegComplete);
   window.ipcRenderer.off('ffmpeg-download-error', handleFFmpegDownloadError);
+  window.ipcRenderer.off('ffmpeg-progress', handleFFmpegProgress);
 });
 </script>
 

@@ -48,6 +48,9 @@
         @back="handleBack"
         :is-processing="isProcessing"
       />
+
+      <!-- 进度显示组件 -->
+      <MkvProgressDisplay :progress="localMkvFile.progress" />
     </div>
   </div>
 </template>
@@ -62,6 +65,7 @@ import ChapterHeader from "../components/ChapterHeader.vue";
 import ChapterTable from "../components/ChapterTable.vue";
 import MkvFileInfo from "../components/MkvFileInfo.vue";
 import MkvMetadataPreview from "../components/MkvMetadataPreview.vue";
+import MkvProgressDisplay from "../components/MkvProgressDisplay.vue";
 
 const appStore = useAppStore();
 

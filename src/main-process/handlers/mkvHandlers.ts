@@ -2,13 +2,37 @@ import { BrowserWindow, app, ipcMain } from "electron";
 import { spawn } from "child_process";
 import path from "node:path";
 import { getFFmpegLocalPath } from "../utils/ffmpegDownloader";
-import { MkvFileData, ChapterData, MkvFile } from "@/shared";
+import { MkvFileData, ChapterData, MkvFile, MKVProgress } from "@/shared";
 import fs from "fs-extra";
 
-// 执行FFmpeg命令，带日志输出
+// 解析FFmpeg进度信息
+function parseFFmpegProgress(outputLine: string, outputPath: string): MKVProgress | null {
+  // 匹配FFmpeg进度输出格式：frame= 2871 fps=1113 q=-1.0 q=-1.0 size=  275712KiB time=00:04:35.23 bitrate=8322.4kbits/s speed=46.4x elapsed=0:00:02.58
+  const progressRegex = /frame=(\s*\d+)\s+fps=(\s*\d+\.\d+)\s+q=(.*?)\s+L?size=(\s*\S+)\s+time=(\S+)\s+bitrate=(\s*\S+)\s+speed=(\s*\S+)\s+elapsed=(\s*\S+)/;
+  const match = outputLine.match(progressRegex);
+  
+  if (match) {
+    return {
+      outputPath,
+      frame: parseInt(match[1].trim()),
+      fps: parseFloat(match[2].trim()),
+      q: match[3].trim().split(/\s+/).filter(Boolean),
+      size: match[4].trim(),
+      time: match[5].trim(),
+      bitrate: match[6].trim(),
+      speed: match[7].trim(),
+      elapsed: match[8].trim()
+    };
+  }
+  
+  return null;
+}
+
+// 执行FFmpeg命令，带日志输出和进度报告
 function executeFFCommand(
   args: string[],
-  mainWindow: BrowserWindow | null
+  mainWindow: BrowserWindow | null,
+  outputPath: string = ""
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const ffmpegPath = getFFmpegLocalPath();
@@ -26,6 +50,15 @@ function executeFFCommand(
       // 发送日志到渲染进程
       if (mainWindow) {
         mainWindow.webContents.send("ffmpeg-log", dataStr);
+        
+        // 解析进度信息并发送给前端
+        const lines = dataStr.split('\n');
+        for (const line of lines) {
+          const progress = parseFFmpegProgress(line, outputPath);
+          if (progress) {
+            mainWindow.webContents.send("ffmpeg-progress", progress);
+          }
+        }
       }
     });
 
@@ -35,6 +68,15 @@ function executeFFCommand(
       // 发送日志到渲染进程
       if (mainWindow) {
         mainWindow.webContents.send("ffmpeg-log", dataStr);
+        
+        // 解析进度信息并发送给前端（FFmpeg可能在stderr输出进度）
+        const lines = dataStr.split('\n');
+        for (const line of lines) {
+          const progress = parseFFmpegProgress(line, outputPath);
+          if (progress) {
+            mainWindow.webContents.send("ffmpeg-progress", progress);
+          }
+        }
       }
     });
 
@@ -282,7 +324,8 @@ async function handleGenerateMkvFile(
         "-y", // 自动覆盖输出文件
         outputPath,
       ],
-      mainWindow
+      mainWindow,
+      outputPath // 传递outputPath给executeFFCommand，用于进度报告
     );
 
     // 清理临时文件
