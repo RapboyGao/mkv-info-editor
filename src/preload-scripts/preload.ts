@@ -2,7 +2,7 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 import { contextBridge, ipcRenderer } from 'electron';
-import { ChapterData, MkvFileData } from '../shared/types';
+import { ChapterData, MkvFileData } from '../shared'; // 使用index.ts导出
 
 // 定义IPC通信接口
 export interface IpcApi {

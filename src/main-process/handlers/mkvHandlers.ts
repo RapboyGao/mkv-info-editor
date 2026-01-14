@@ -2,7 +2,7 @@ import { BrowserWindow, app, ipcMain } from "electron";
 import { spawn } from "child_process";
 import path from "node:path";
 import { getFFmpegLocalPath } from "../utils/ffmpegDownloader";
-import { MkvFileData, ChapterData, MkvFile } from "../../shared/types";
+import { MkvFileData, ChapterData, MkvFile } from "@/shared";
 import fs from "fs-extra";
 
 // 执行FFmpeg命令，带日志输出

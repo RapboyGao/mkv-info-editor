@@ -99,8 +99,8 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useAppStore } from "../stores/appStore";
 import { ElMessage } from "element-plus";
 import { Check, Close } from "@element-plus/icons-vue";
-import type { ChapterData } from "../../shared/types";
-import { Chapter } from "../../shared/types";
+import type { ChapterData } from "@/shared";
+import { Chapter } from "@/shared";
 
 const appStore = useAppStore();
 

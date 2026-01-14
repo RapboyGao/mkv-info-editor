@@ -1,6 +1,6 @@
 import { ipcMain } from "electron";
 import fs from "fs-extra";
-import { ChapterData } from "../../shared/types";
+import { ChapterData } from "@/shared";
 
 /**
  * 注册元数据处理相关的 IPC 处理程序

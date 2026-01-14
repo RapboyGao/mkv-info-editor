@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ChapterData, MkvFile, MkvFileData } from '../../shared/types';
+import { ChapterData, MkvFile, MkvFileData } from '@/shared'; // 使用index.ts导出
 
 export const useAppStore = defineStore('app', {
   state: () => ({

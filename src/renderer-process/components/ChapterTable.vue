@@ -68,7 +68,7 @@ import { computed } from "vue";
 import { ElMessage } from "element-plus";
 import { Delete } from "@element-plus/icons-vue";
 import ChapterStartTimeEditor from "./ChapterStartTimeEditor.vue";
-import { Chapter, ChapterData } from "../../shared/types";
+import { Chapter, ChapterData } from "@/shared";
 
 // Props定义
 const props = defineProps<{
