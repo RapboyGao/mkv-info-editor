@@ -1,27 +1,5 @@
 <template>
-  <el-card class="logs-card" shadow="hover">
-    <!-- 处理状态提示 -->
-    <el-alert
-      v-if="appStore.isProcessing"
-      :title="appStore.processingMessage"
-      type="info"
-      :closable="false"
-      style="margin-bottom: 20px;"
-    />
-    
-    <!-- FFmpeg进度条 -->
-    <el-progress 
-      v-if="appStore.showFFmpegProgress"
-      :percentage="appStore.ffmpegProgress" 
-      :stroke-width="15" 
-      :show-text="true"
-      style="margin-bottom: 20px;"
-    >
-      <template #text>
-        <span>{{ appStore.ffmpegProgress.toFixed(1) }}%</span>
-      </template>
-    </el-progress>
-    
+  <el-card class="logs-card" shadow="hover">    
     <!-- FFmpeg执行日志 -->
     <template #header>
       <div class="card-header">
