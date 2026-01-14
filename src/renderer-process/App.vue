@@ -1,7 +1,13 @@
 <template>
   <div class="app-container">
     <header class="app-header">
-      <h1>MKV章节名称编辑器</h1>
+      <h1>{{ t('app.title') }}</h1>
+      <div class="language-switcher">
+        <el-select v-model="currentLocale" @change="switchLanguage" size="small">
+          <el-option label="English" value="en" />
+          <el-option label="中文" value="zh" />
+        </el-select>
+      </div>
     </header>
     
     <main class="app-main">
@@ -19,14 +25,22 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue';
+import { onMounted, onBeforeUnmount, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAppStore } from './stores/appStore';
 import { ElMessage } from 'element-plus';
 import LogsDisplay from './components/LogsDisplay.vue';
+import { useI18n } from 'vue-i18n';
 
 const appStore = useAppStore();
 const router = useRouter();
+const { t, locale } = useI18n();
+const currentLocale = ref(locale.value);
+
+// 切换语言
+const switchLanguage = (lang: string) => {
+  locale.value = lang;
+};
 
 // 处理FFmpeg日志
 const handleFFmpegLog = (event: Electron.IpcRendererEvent, logData: string) => {
@@ -113,7 +127,7 @@ onBeforeUnmount(() => {
   padding: 0 20px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   width: 100%;
   box-sizing: border-box;
   margin: 0;
@@ -124,8 +138,13 @@ onBeforeUnmount(() => {
   font-size: 24px;
   margin: 0;
   padding: 20px 0;
-  width: 100%;
   text-align: center;
+}
+
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .app-main {

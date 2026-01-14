@@ -1,7 +1,7 @@
 <template>
   <el-table :data="chapters" style="width: 100%" border :row-key="'id'" fit>
     <el-table-column label="序号" width="60" align="center" type="index" />
-    <el-table-column label="开始时间" width="250" align="center">
+    <el-table-column :label="t('chapterTable.startTime')" width="250" align="center">
       <template #default="scope">
         <ChapterStartTimeEditor
           :chapter="scope.row"
@@ -12,7 +12,7 @@
         />
       </template>
     </el-table-column>
-    <el-table-column label="结束时间" width="180" align="center">
+    <el-table-column :label="t('chapterTable.duration')" width="180" align="center">
       <template #default="scope">
         {{ chapterInstances[scope.$index].endTime }}
       </template>
@@ -27,7 +27,7 @@
       <template #default="scope">
         <el-input
           v-model="scope.row.title"
-          placeholder="请输入章节标题"
+          :placeholder="t('chapterTable.title')"
           style="width: 100%"
           @input="handleTitleChange(scope.$index, scope.row.title)"
         />
@@ -43,13 +43,14 @@
         <div class="original-title">{{ scope.row.originalTitle }}</div>
       </template>
     </el-table-column>
-    <el-table-column label="操作" width="120" fixed="right" align="center">
+    <el-table-column :label="t('chapterTable.actions')" width="120" fixed="right" align="center">
       <template #default="scope">
         <el-button
           type="danger"
           size="small"
           @click="deleteChapter(scope.$index)"
           :disabled="chapters.length <= 1"
+          title="{{ t('chapterTable.deleteChapter') }}"
         >
           <el-icon><Delete /></el-icon>
         </el-button>
@@ -62,8 +63,11 @@
 import { computed } from "vue";
 import { ElMessage } from "element-plus";
 import { Delete } from "@element-plus/icons-vue";
+import { useI18n } from "vue-i18n";
 import ChapterStartTimeEditor from "./ChapterStartTimeEditor.vue";
 import { Chapter, ChapterData } from "@/shared";
+
+const { t } = useI18n();
 
 // Props定义
 const props = defineProps<{

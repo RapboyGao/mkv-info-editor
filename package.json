@@ -1,8 +1,8 @@
 {
   "name": "mkv-chapter-editor",
-  "productName": "mkv-chapter-editor",
+  "productName": "MKV Chapter Editor",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "A powerful MKV chapter editor with multi-language support",
   "main": ".vite/build/main.js",
   "private": true,
   "scripts": {
@@ -53,6 +53,7 @@
     "lodash": "^4.17.21",
     "pinia": "^3.0.4",
     "vue": "^3.5.26",
+    "vue-i18n": "^11.2.8",
     "vue-router": "^4.6.4"
   }
 }

@@ -10,6 +10,7 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import './index.css';
 import App from './App.vue';
 import router from './router';
+import i18n from './i18n';
 
 // 创建Vue应用实例
 const app = createApp(App);
@@ -23,6 +24,9 @@ app.use(ElementPlus);
 
 // 使用router
 app.use(router);
+
+// 使用i18n
+app.use(i18n);
 
 // 注册所有图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

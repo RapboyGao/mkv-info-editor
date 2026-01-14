@@ -1,20 +1,20 @@
 <template>
   <div class="mkv-file-info">
     <!-- 只读信息 -->
-    <el-descriptions title="基本信息" :column="1" border>
-      <el-descriptions-item label="文件路径">{{
+    <el-descriptions :title="t('fileInfo.fileName')" :column="1" border>
+      <el-descriptions-item :label="t('fileInfo.fileName')">{{
         mkvFile.filePath
       }}</el-descriptions-item>
-      <el-descriptions-item label="时长">{{
+      <el-descriptions-item :label="t('fileInfo.duration')">{{
         mkvFile.formattedDuration
       }}</el-descriptions-item>
-      <el-descriptions-item label="文件大小">{{
+      <el-descriptions-item :label="t('fileInfo.fileSize')">{{
         mkvFile.formattedSize
       }}</el-descriptions-item>
-      <el-descriptions-item label="格式">{{
+      <el-descriptions-item :label="t('fileInfo.format')">{{
         mkvFile.formatName
       }}</el-descriptions-item>
-      <el-descriptions-item label="比特率" v-if="mkvFile.bitRate">
+      <el-descriptions-item :label="t('fileInfo.codec')" v-if="mkvFile.bitRate">
         {{ (mkvFile.bitRate / 1000).toFixed(2) }} kbps
       </el-descriptions-item>
     </el-descriptions>
@@ -26,14 +26,14 @@
       <el-form-item label="标题">
         <el-input
           v-model="localTitle"
-          placeholder="请输入文件标题"
+          placeholder="{{ t('fileInfo.fileName') }}"
           @input="handleTitleChange"
         />
       </el-form-item>
       <el-form-item label="编码器">
         <el-input
           v-model="localEncoder"
-          placeholder="请输入编码器信息"
+          placeholder="{{ t('fileInfo.codec') }}"
           @input="handleEncoderChange"
         />
       </el-form-item>
@@ -45,6 +45,9 @@
 import { ElMessage } from "element-plus";
 import { computed, ref, watch } from "vue";
 import { MkvFile } from "@/shared";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 // 定义props
 const props = defineProps<{

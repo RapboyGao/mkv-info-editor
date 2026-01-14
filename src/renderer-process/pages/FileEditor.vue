@@ -3,7 +3,7 @@
     <!-- 文件选择部分 -->
     <div v-if="!appStore.mkvFile.isValid" class="file-selection">
       <el-empty 
-        description="请选择要编辑的MKV文件"
+        :description="t('messages.selectFile')"
         :image-size="120"
       >
         <el-button 
@@ -12,7 +12,7 @@
           :loading="appStore.isProcessing"
         >
           <el-icon><FolderOpened /></el-icon>
-          选择MKV文件
+          {{ t('actions.openFile') }}
         </el-button>
       </el-empty>
     </div>
@@ -60,12 +60,15 @@ import { computed } from "vue";
 import { useAppStore } from "../stores/appStore";
 import { ElMessage } from "element-plus";
 import { FolderOpened, Refresh } from "@element-plus/icons-vue";
+import { useI18n } from "vue-i18n";
 import ActionButtons from "../components/ActionButtons.vue";
 import ChapterHeader from "../components/ChapterHeader.vue";
 import ChapterTable from "../components/ChapterTable.vue";
 import MkvFileInfo from "../components/MkvFileInfo.vue";
 import MkvMetadataPreview from "../components/MkvMetadataPreview.vue";
 import MkvProgressDisplay from "../components/MkvProgressDisplay.vue";
+
+const { t } = useI18n();
 
 const appStore = useAppStore();
 

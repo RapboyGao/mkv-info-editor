@@ -25,14 +25,14 @@
   <el-card v-if="appStore.logs" class="logs-card" shadow="hover">
     <template #header>
       <div class="card-header">
-        <span>FFmpeg执行日志</span>
+        <span>{{ t('logs.title') }}</span>
         <el-button 
           type="text" 
           @click="appStore.clearLogs" 
           size="small"
         >
           <el-icon><Delete /></el-icon>
-          清空日志
+          {{ t('logs.clearLogs') }}
         </el-button>
       </div>
     </template>
@@ -50,6 +50,9 @@
 import { ref, watch } from 'vue';
 import { useAppStore } from '../stores/appStore';
 import { Delete } from '@element-plus/icons-vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const appStore = useAppStore();
 const scrollbarElement = ref<any>(null);

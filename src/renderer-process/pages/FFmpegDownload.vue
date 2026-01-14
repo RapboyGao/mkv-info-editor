@@ -2,13 +2,13 @@
   <div class="step-content">
     <div class="download-info">
       <el-alert
-        title="FFmpeg是处理视频文件的必要工具"
+        :title="t('ffmpeg.required')"
         type="info"
         show-icon
         :closable="false"
         style="margin-bottom: 20px;"
       >
-        本工具需要FFmpeg来解析和修改MKV文件的章节信息。首次使用时需要下载FFmpeg，这可能需要几分钟时间。
+        {{ t('ffmpeg.required') }}
       </el-alert>
       
       <div class="download-action">
@@ -31,7 +31,7 @@
           style="margin-left: 10px;"
         >
           <el-icon><Right /></el-icon>
-          继续到选择文件
+          {{ t('actions.continue') }}
         </el-button>
       </div>
       
@@ -49,7 +49,7 @@
       
       <div v-if="appStore.ffmpegDownloaded" class="download-success">
         <el-icon class="success-icon"><CircleCheck /></el-icon>
-        <span>FFmpeg下载完成！</span>
+        <span>{{ t('ffmpeg.completed') }}</span>
       </div>
     </div>
   </div>
@@ -61,6 +61,9 @@ import { ElMessage } from 'element-plus';
 import { CircleCheck, Download, Right } from '@element-plus/icons-vue';
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const appStore = useAppStore();
 const router = useRouter();

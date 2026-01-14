@@ -1,9 +1,9 @@
 <template>
   <div class="action-buttons">
-    <el-button type="default" @click="backToFileSelection">
+    <el-button type="default" @click="backToFileSelection" title="{{ t('actions.cancel') }}">
       <el-icon><Back /></el-icon>
     </el-button>
-    <el-button type="success" @click="saveChanges" :loading="isProcessing">
+    <el-button type="success" @click="saveChanges" :loading="isProcessing" title="{{ t('actions.saveFile') }}">
       <el-icon><Check /></el-icon>
     </el-button>
   </div>
@@ -11,6 +11,9 @@
 
 <script setup lang="ts">
 import { Back, Check } from "@element-plus/icons-vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 // 定义props
 const props = defineProps<{
