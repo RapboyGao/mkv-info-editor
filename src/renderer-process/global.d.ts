@@ -2,6 +2,17 @@
 
 import type { ChapterData, MkvFileData } from '../shared';
 
+// 声明Vue文件的类型
+declare module '*.vue' {
+  import type { DefineComponent } from 'vue'
+  const component: DefineComponent<{}, {}, any>
+  export default component
+}
+
+// 声明Vite Forge生成的变量
+declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
+declare const MAIN_WINDOW_VITE_NAME: string;
+
 declare global {
   interface Window {
     electronAPI: {

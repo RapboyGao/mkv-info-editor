@@ -72,6 +72,9 @@ importers:
       '@electron-forge/plugin-fuses':
         specifier: ^7.11.1
         version: 7.11.1(@electron/fuses@1.8.0)
+      '@electron-forge/plugin-vite':
+        specifier: ^7.11.1
+        version: 7.11.1
       '@electron/fuses':
         specifier: ^1.8.0
         version: 1.8.0
@@ -172,6 +175,10 @@ packages:
     engines: {node: '>= 16.4.0'}
     peerDependencies:
       '@electron/fuses': ^1.0.0
+
+  '@electron-forge/plugin-vite@7.11.1':
+    resolution: {integrity: sha512-kc/WQs/0+9VC9Q4oSSocMa02YxKDvAYxhWtNcL+qlswZMJlxe8gX7vl/yXq9AjPQxw7f3jzf7nruUPKQ+vyLLg==}
+    engines: {node: '>= 16.4.0'}
 
   '@electron-forge/publisher-base@7.11.1':
     resolution: {integrity: sha512-rXE9oMFGMtdQrixnumWYH5TTGsp99iPHZb3jI74YWq518ctCh6DlIgWlhf6ok2X0+lhWovcIb45KJucUFAQ13w==}
@@ -2733,6 +2740,18 @@ snapshots:
       '@electron-forge/plugin-base': 7.11.1
       '@electron-forge/shared-types': 7.11.1
       '@electron/fuses': 1.8.0
+    transitivePeerDependencies:
+      - bluebird
+      - supports-color
+
+  '@electron-forge/plugin-vite@7.11.1':
+    dependencies:
+      '@electron-forge/plugin-base': 7.11.1
+      '@electron-forge/shared-types': 7.11.1
+      chalk: 4.1.2
+      debug: 4.4.3
+      fs-extra: 10.1.0
+      listr2: 7.0.2
     transitivePeerDependencies:
       - bluebird
       - supports-color
