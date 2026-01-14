@@ -234,19 +234,14 @@ async function handleGetMkvFileInfo(filePath: string, mainWindow: BrowserWindow)
     const chaptersList: ChapterData[] = [];
     let currentChapter: Partial<ChapterData> = {};
     let timebase = "1/1000"; // 默认时间基准为毫秒
+    let inChapterSection = false; // 标记是否进入了章节部分
     
     for (const line of metadataContent.split('\n')) {
       const trimmedLine = line.trim();
       
-      // 解析全局元数据（在元数据文件中）
-      if (trimmedLine.startsWith("title=")) {
-        title = trimmedLine.split("=")[1];
-      } else if (trimmedLine.startsWith("encoder=")) {
-        encoder = trimmedLine.split("=")[1];
-      }
-      
-      // 解析章节信息
+      // 检查是否进入章节部分
       if (trimmedLine.startsWith("[CHAPTER]")) {
+        inChapterSection = true;
         // 新章节开始，保存之前的章节（如果有）
         if (currentChapter.start !== undefined) {
           chaptersList.push({
@@ -260,23 +255,36 @@ async function handleGetMkvFileInfo(filePath: string, mainWindow: BrowserWindow)
         }
         // 重置当前章节
         currentChapter = {};
-      } else if (trimmedLine.startsWith("TIMEBASE=")) {
-        // 解析TIMEBASE
-        const timebaseStr = trimmedLine.split("=")[1];
-        if (/^\d+\/\d+$/.test(timebaseStr)) {
-          timebase = timebaseStr;
-          currentChapter.timeBase = timebase as `${number}/${number}`;
+        continue; // 跳过当前行，进入下一行处理
+      }
+      
+      // 解析全局元数据（仅在章节部分之前）
+      if (!inChapterSection) {
+        if (trimmedLine.startsWith("title=")) {
+          title = trimmedLine.split("=")[1];
+        } else if (trimmedLine.startsWith("encoder=")) {
+          encoder = trimmedLine.split("=")[1];
         }
-      } else if (trimmedLine.startsWith("START=")) {
-        // 解析开始时间
-        const start = parseInt(trimmedLine.split("=")[1]);
-        currentChapter.start = start;
-        if (!currentChapter.timeBase) {
-          currentChapter.timeBase = timebase as `${number}/${number}`;
+      } else {
+        // 解析章节信息（仅在章节部分内）
+        if (trimmedLine.startsWith("TIMEBASE=")) {
+          // 解析TIMEBASE
+          const timebaseStr = trimmedLine.split("=")[1];
+          if (/^\d+\/\d+$/.test(timebaseStr)) {
+            timebase = timebaseStr;
+            currentChapter.timeBase = timebase as `${number}/${number}`;
+          }
+        } else if (trimmedLine.startsWith("START=")) {
+          // 解析开始时间
+          const start = parseInt(trimmedLine.split("=")[1]);
+          currentChapter.start = start;
+          if (!currentChapter.timeBase) {
+            currentChapter.timeBase = timebase as `${number}/${number}`;
+          }
+        } else if (trimmedLine.startsWith("title=")) {
+          // 解析章节标题
+          currentChapter.title = trimmedLine.split("=")[1];
         }
-      } else if (trimmedLine.startsWith("title=")) {
-        // 解析章节标题
-        currentChapter.title = trimmedLine.split("=")[1];
       }
     }
     
