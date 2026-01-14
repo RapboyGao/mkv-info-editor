@@ -37,11 +37,11 @@ import { ElMessage } from "element-plus";
 import { computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useAppStore } from "../stores/appStore";
-import ActionButtons from "./ActionButtons.vue";
-import ChapterHeader from "./ChapterHeader.vue";
-import ChapterTable from "./ChapterTable.vue";
-import MkvFileInfo from "./MkvFileInfo.vue";
-import MkvMetadataPreview from "./MkvMetadataPreview.vue";
+import ActionButtons from "../components/ActionButtons.vue";
+import ChapterHeader from "../components/ChapterHeader.vue";
+import ChapterTable from "../components/ChapterTable.vue";
+import MkvFileInfo from "../components/MkvFileInfo.vue";
+import MkvMetadataPreview from "../components/MkvMetadataPreview.vue";
 
 // 获取appStore实例
 const appStore = useAppStore();

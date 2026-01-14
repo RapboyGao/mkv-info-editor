@@ -1,8 +1,8 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import { useAppStore } from '../stores/appStore';
-import FFmpegDownload from '../components/FFmpegDownload.vue';
-import FileSelection from '../components/FileSelection.vue';
-import ChapterEditor from '../components/ChapterEditor.vue';
+import FFmpegDownload from '../pages/FFmpegDownload.vue';
+import FileSelection from '../pages/FileSelection.vue';
+import ChapterEditor from '../pages/ChapterEditor.vue';
 
 const routes = [
   {
