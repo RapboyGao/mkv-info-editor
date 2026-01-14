@@ -90,6 +90,8 @@ async function handleGetMkvFileInfo(
 
     const output = await executeFFCommand(command, mainWindow);
 
+    console.log("FFmpeg output:\n", output, "\n\n\n");
+
     // 3. 读取并解析元数据内容
     const metadataContent = await fs.readFile(metadataPath, "utf-8");
 

@@ -1,11 +1,5 @@
 <template>
-  <el-table
-    :data="chapters"
-    style="width: 100%"
-    border
-    :row-key="'id'"
-    fit
-  >
+  <el-table :data="chapters" style="width: 100%" border :row-key="'id'" fit>
     <el-table-column label="序号" width="60" align="center" type="index" />
     <el-table-column label="开始时间" width="250" align="center">
       <template #default="scope">
@@ -50,13 +44,12 @@
     <el-table-column label="操作" width="120" fixed="right" align="center">
       <template #default="scope">
         <el-button
-            type="danger"
-            size="small"
-            @click="deleteChapter(scope.$index)"
-            :disabled="chapters.length <= 1"
-          >
+          type="danger"
+          size="small"
+          @click="deleteChapter(scope.$index)"
+          :disabled="chapters.length <= 1"
+        >
           <el-icon><Delete /></el-icon>
-          删除
         </el-button>
       </template>
     </el-table-column>
@@ -77,20 +70,18 @@ const props = defineProps<{
 
 // Emits定义
 const emit = defineEmits<{
-  (e: 'chapter-updated'): void;
-  (e: 'chapter-deleted', index: number): void;
+  (e: "chapter-updated"): void;
+  (e: "chapter-deleted", index: number): void;
 }>();
 
 // 创建Chapter实例数组，用于访问计算属性
 const chapterInstances = computed(() => {
-  return props.chapters.map(
-    (chapter) => new Chapter(chapter)
-  );
+  return props.chapters.map((chapter) => new Chapter(chapter));
 });
 
 // 保存时间编辑
 const handleSave = () => {
-  emit('chapter-updated');
+  emit("chapter-updated");
 };
 
 // 取消时间编辑
@@ -107,8 +98,8 @@ const deleteChapter = (index: number) => {
     });
     return;
   }
-  
-  emit('chapter-deleted', index);
+
+  emit("chapter-deleted", index);
 };
 </script>
 
