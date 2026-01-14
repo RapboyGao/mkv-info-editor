@@ -37,23 +37,9 @@
             />
           </template>
         </el-table-column>
-        <el-table-column
-          label="结束时间"
-          width="180"
-          align="center"
-        >
+        <el-table-column label="结束时间" width="180" align="center">
           <template #default="scope">
             {{ chapterInstances[scope.$index].endTime }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="originalTitle"
-          label="原始标题"
-          min-width="200"
-          show-overflow-tooltip
-        >
-          <template #default="scope">
-            <div class="original-title">{{ scope.row.originalTitle }}</div>
           </template>
         </el-table-column>
         <el-table-column
@@ -67,16 +53,18 @@
             <el-input
               v-model="scope.row.title"
               placeholder="请输入章节标题"
-              size="small"
               style="width: 100%"
             />
-            <el-divider style="margin: 5px 0" />
-            <div
-              class="title-diff"
-              v-if="scope.row.title !== scope.row.originalTitle"
-            >
-              <el-tag type="warning" size="small">已修改</el-tag>
-            </div>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="originalTitle"
+          label="原始标题"
+          min-width="200"
+          show-overflow-tooltip
+        >
+          <template #default="scope">
+            <div class="original-title">{{ scope.row.originalTitle }}</div>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="120" fixed="right" align="center">
@@ -125,7 +113,7 @@ const appStore = useAppStore();
 
 // 创建Chapter实例数组，用于访问计算属性
 const chapterInstances = computed(() => {
-  return appStore.chapters.map(chapter => new Chapter(chapter));
+  return appStore.chapters.map((chapter) => new Chapter(chapter));
 });
 
 // 返回文件选择
@@ -136,15 +124,6 @@ const backToFileSelection = () => {
 // 获取文件名
 const getFileName = (path: string): string => {
   return path.split("/").pop() || path;
-};
-
-// 格式化时长为时间字符串
-const formatDuration = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
-  const ms = Math.floor((seconds % 1) * 1000);
-  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
 };
 
 // 保存时间编辑

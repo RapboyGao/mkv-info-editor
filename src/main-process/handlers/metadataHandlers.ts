@@ -43,7 +43,7 @@ export function registerMetadataHandlers() {
             if (/^\d+\/\d+$/.test(timebaseStr)) {
               timebase = timebaseStr as `${number}/${number}`;
               // 更新当前章节的timeBase
-              currentChapter.timeBase = timebase;
+              currentChapter.timeBase = timebase as `${number}/${number}`;
             }
           } else if (trimmedLine.startsWith("START=")) {
             // 解析开始时间，只存储原始值，不计算时间字符串（等待TIMEBASE解析后再计算）
@@ -51,7 +51,7 @@ export function registerMetadataHandlers() {
             currentChapter.start = start;
             // 确保当前章节有timeBase
             if (!currentChapter.timeBase) {
-              currentChapter.timeBase = timebase;
+              currentChapter.timeBase = timebase as `${number}/${number}`;
             }
           } else if (trimmedLine.startsWith("title=")) {
             // 解析章节标题
@@ -63,7 +63,7 @@ export function registerMetadataHandlers() {
         if (currentChapter.start !== undefined) {
           // 确保最后一个章节有timeBase
           if (!currentChapter.timeBase) {
-            currentChapter.timeBase = timebase;
+            currentChapter.timeBase = timebase as `${number}/${number}`;
           }
           
           // 创建一个包含所有必需属性的ChapterData对象
