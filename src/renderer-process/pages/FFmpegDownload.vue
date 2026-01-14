@@ -1,57 +1,57 @@
 <template>
-  <div class="step-content">
-    <div class="download-info">
-      <el-alert
-        :title="t('ffmpeg.required')"
-        type="info"
-        show-icon
-        :closable="false"
-        style="margin-bottom: 20px;"
+  <div class="download-container">
+    <el-alert
+      :title="t('ffmpeg.required')"
+      type="info"
+      show-icon
+      :closable="false"
+      style="margin-bottom: 20px;"
+    >
+      {{ t('ffmpeg.required') }}
+    </el-alert>
+    
+    <div class="button-group">
+      <el-button 
+        type="primary" 
+        @click="downloadFFmpeg" 
+        :loading="appStore.isProcessing" 
+        size="large"
       >
-        {{ t('ffmpeg.required') }}
-      </el-alert>
+        <el-icon><Download /></el-icon>
+        {{ appStore.ffmpegDownloaded ? '重新下载FFmpeg' : '开始下载FFmpeg' }}
+      </el-button>
       
-      <div class="download-action">
-        <el-button 
-          type="primary" 
-          @click="downloadFFmpeg" 
-          :loading="appStore.isProcessing" 
-          size="large"
-        >
-          <el-icon><Download /></el-icon>
-          {{ appStore.ffmpegDownloaded ? '重新下载FFmpeg' : '开始下载FFmpeg' }}
-        </el-button>
-        
-        <!-- 只有FFmpeg已下载时才显示继续按钮 -->
-        <el-button 
-          type="success" 
-          @click="goToFileSelection" 
-          :disabled="!appStore.ffmpegDownloaded" 
-          size="large"
-          style="margin-left: 10px;"
-        >
-          <el-icon><Right /></el-icon>
-          {{ t('actions.continue') }}
-        </el-button>
-      </div>
-      
-      <el-progress 
-        v-if="appStore.showDownloadProgress" 
-        :percentage="appStore.downloadProgress" 
-        :stroke-width="20" 
-        :show-text="true"
-        style="margin: 20px 0;"
+      <!-- 只有FFmpeg已下载时才显示继续按钮 -->
+      <el-button 
+        type="success" 
+        @click="goToFileSelection" 
+        :disabled="!appStore.ffmpegDownloaded" 
+        size="large"
       >
-        <template #text>
-          <span>{{ appStore.downloadProgress }}%</span>
-        </template>
-      </el-progress>
-      
-      <div v-if="appStore.ffmpegDownloaded" class="download-success">
-        <el-icon class="success-icon"><CircleCheck /></el-icon>
-        <span>{{ t('ffmpeg.completed') }}</span>
-      </div>
+        <el-icon><Right /></el-icon>
+        {{ t('actions.continue') }}
+      </el-button>
     </div>
+    
+    <el-progress 
+      v-if="appStore.showDownloadProgress" 
+      :percentage="appStore.downloadProgress" 
+      :stroke-width="20" 
+      :show-text="true"
+      style="margin: 20px 0;"
+    >
+      <template #text>
+        <span>{{ appStore.downloadProgress }}%</span>
+      </template>
+    </el-progress>
+    
+    <el-alert
+      v-if="appStore.ffmpegDownloaded"
+      :title="t('ffmpeg.completed')"
+      type="success"
+      show-icon
+      :closable="false"
+    />
   </div>
 </template>
 
@@ -106,27 +106,20 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.download-info {
-  width: 100%;
-  margin: 0;
-}
-
-.download-action {
-  text-align: center;
-  margin: 30px 0;
-}
-
-.download-success {
+.download-container {
+  padding: 20px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-top: 20px;
-  color: #67c23a;
-  font-size: 18px;
+  min-height: 400px;
 }
 
-.success-icon {
-  margin-right: 10px;
-  font-size: 24px;
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin: 30px 0;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 </style>

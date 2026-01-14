@@ -1,36 +1,28 @@
 <template>
   <div class="app-container">
     <header class="app-header">
-      <h1>{{ t('app.title') }}</h1>
-      <div class="language-switcher">
-        <el-select v-model="currentLocale" @change="switchLanguage" size="small">
-          <el-option label="English" value="en" />
-          <el-option label="中文" value="zh" />
-        </el-select>
-      </div>
+      <h1>{{ t("app.title") }}</h1>
+      <el-select v-model="currentLocale" @change="switchLanguage" size="small">
+        <el-option label="English" value="en" />
+        <el-option label="中文" value="zh" />
+      </el-select>
     </header>
-    
+
     <main class="app-main">
-      <!-- 路由视图 -->
-      <div class="router-container">
-        <router-view />
-      </div>
-      
+      <router-view />
       <!-- 日志和进度显示 -->
-      <div class="logs-container">
-        <LogsDisplay />
-      </div>
+      <LogsDisplay />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAppStore } from './stores/appStore';
-import { ElMessage } from 'element-plus';
-import LogsDisplay from './components/LogsDisplay.vue';
-import { useI18n } from 'vue-i18n';
+import { onMounted, onBeforeUnmount, ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAppStore } from "./stores/appStore";
+import { ElMessage } from "element-plus";
+import LogsDisplay from "./components/LogsDisplay.vue";
+import { useI18n } from "vue-i18n";
 
 const appStore = useAppStore();
 const router = useRouter();
@@ -45,7 +37,7 @@ const switchLanguage = (lang: string) => {
 // 处理FFmpeg日志
 const handleFFmpegLog = (event: Electron.IpcRendererEvent, logData: string) => {
   appStore.addLog(logData);
-  
+
   // 解析FFmpeg进度信息
   const progressMatch = logData.match(/time=(\d{2}:\d{2}:\d{2}\.\d{2})/);
   if (progressMatch) {
@@ -55,7 +47,10 @@ const handleFFmpegLog = (event: Electron.IpcRendererEvent, logData: string) => {
 };
 
 // 处理FFmpeg下载进度
-const handleFFmpegDownloadProgress = (event: Electron.IpcRendererEvent, progress: number) => {
+const handleFFmpegDownloadProgress = (
+  event: Electron.IpcRendererEvent,
+  progress: number
+) => {
   appStore.updateDownloadProgress(progress);
 };
 
@@ -66,19 +61,22 @@ const handleFFmpegComplete = () => {
   appStore.setFFmpegDownloaded(true);
   appStore.setProcessing(false);
   ElMessage({
-    message: 'FFmpeg下载完成，已准备就绪！',
-    type: 'success'
+    message: "FFmpeg下载完成，已准备就绪！",
+    type: "success",
   });
-  
+
   // 跳转到文件编辑器页面
-  router.push('/file-editor');
+  router.push("/file-editor");
 };
 
 // 处理FFmpeg下载错误
-const handleFFmpegDownloadError = (event: Electron.IpcRendererEvent, errorMessage: string) => {
+const handleFFmpegDownloadError = (
+  event: Electron.IpcRendererEvent,
+  errorMessage: string
+) => {
   ElMessage({
     message: `FFmpeg下载失败: ${errorMessage}`,
-    type: 'error'
+    type: "error",
   });
   appStore.updateDownloadProgress(0);
   appStore.hideDownloadProgress();
@@ -92,20 +90,26 @@ const handleFFmpegProgress = (event: any, progress: any) => {
 
 // 组件挂载时注册IPC事件监听
 onMounted(() => {
-  window.ipcRenderer.on('ffmpeg-log', handleFFmpegLog);
-  window.ipcRenderer.on('ffmpeg-download-progress', handleFFmpegDownloadProgress);
-  window.ipcRenderer.on('ffmpeg-download-complete', handleFFmpegComplete);
-  window.ipcRenderer.on('ffmpeg-download-error', handleFFmpegDownloadError);
-  window.ipcRenderer.on('ffmpeg-progress', handleFFmpegProgress);
+  window.ipcRenderer.on("ffmpeg-log", handleFFmpegLog);
+  window.ipcRenderer.on(
+    "ffmpeg-download-progress",
+    handleFFmpegDownloadProgress
+  );
+  window.ipcRenderer.on("ffmpeg-download-complete", handleFFmpegComplete);
+  window.ipcRenderer.on("ffmpeg-download-error", handleFFmpegDownloadError);
+  window.ipcRenderer.on("ffmpeg-progress", handleFFmpegProgress);
 });
 
 // 组件卸载前移除IPC事件监听
 onBeforeUnmount(() => {
-  window.ipcRenderer.off('ffmpeg-log', handleFFmpegLog);
-  window.ipcRenderer.off('ffmpeg-download-progress', handleFFmpegDownloadProgress);
-  window.ipcRenderer.off('ffmpeg-download-complete', handleFFmpegComplete);
-  window.ipcRenderer.off('ffmpeg-download-error', handleFFmpegDownloadError);
-  window.ipcRenderer.off('ffmpeg-progress', handleFFmpegProgress);
+  window.ipcRenderer.off("ffmpeg-log", handleFFmpegLog);
+  window.ipcRenderer.off(
+    "ffmpeg-download-progress",
+    handleFFmpegDownloadProgress
+  );
+  window.ipcRenderer.off("ffmpeg-download-complete", handleFFmpegComplete);
+  window.ipcRenderer.off("ffmpeg-download-error", handleFFmpegDownloadError);
+  window.ipcRenderer.off("ffmpeg-progress", handleFFmpegProgress);
 });
 </script>
 
@@ -141,12 +145,6 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-.language-switcher {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .app-main {
   flex: 1;
   padding: 20px;
@@ -158,21 +156,13 @@ onBeforeUnmount(() => {
   overflow-x: hidden;
 }
 
-.router-container {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+.router-card {
   margin-bottom: 24px;
-  width: 100%;
-  box-sizing: border-box;
+  border-radius: 8px;
   overflow: hidden;
 }
 
-.logs-container {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  width: 100%;
-  box-sizing: border-box;
+.el-card__body {
+  padding: 0;
 }
 </style>

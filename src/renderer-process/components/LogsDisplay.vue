@@ -1,28 +1,28 @@
 <template>
-  <!-- 处理状态提示 -->
-  <el-alert
-    v-if="appStore.isProcessing"
-    :title="appStore.processingMessage"
-    type="info"
-    :closable="false"
-    style="margin-bottom: 20px;"
-  />
-  
-  <!-- FFmpeg进度条 -->
-  <el-progress 
-    v-if="appStore.showFFmpegProgress"
-    :percentage="appStore.ffmpegProgress" 
-    :stroke-width="15" 
-    :show-text="true"
-    style="margin-bottom: 20px;"
-  >
-    <template #text>
-      <span>{{ appStore.ffmpegProgress.toFixed(1) }}%</span>
-    </template>
-  </el-progress>
-  
-  <!-- FFmpeg执行日志 -->
-  <el-card v-if="appStore.logs" class="logs-card" shadow="hover">
+  <el-card class="logs-card" shadow="hover">
+    <!-- 处理状态提示 -->
+    <el-alert
+      v-if="appStore.isProcessing"
+      :title="appStore.processingMessage"
+      type="info"
+      :closable="false"
+      style="margin-bottom: 20px;"
+    />
+    
+    <!-- FFmpeg进度条 -->
+    <el-progress 
+      v-if="appStore.showFFmpegProgress"
+      :percentage="appStore.ffmpegProgress" 
+      :stroke-width="15" 
+      :show-text="true"
+      style="margin-bottom: 20px;"
+    >
+      <template #text>
+        <span>{{ appStore.ffmpegProgress.toFixed(1) }}%</span>
+      </template>
+    </el-progress>
+    
+    <!-- FFmpeg执行日志 -->
     <template #header>
       <div class="card-header">
         <span>{{ t('logs.title') }}</span>
@@ -36,13 +36,19 @@
         </el-button>
       </div>
     </template>
+    
     <el-scrollbar 
+      v-if="appStore.logs"
       height="30vh" 
       class="logs-scrollbar"
       ref="scrollbarElement"
     >
       <pre class="logs-content">{{ appStore.logs }}</pre>
     </el-scrollbar>
+    
+    <div v-else class="no-logs">
+      <el-empty description="暂无日志" :image-size="80" />
+    </div>
   </el-card>
 </template>
 
@@ -69,10 +75,6 @@ watch(() => appStore.logs, () => {
 </script>
 
 <style scoped>
-.logs-card {
-  margin-bottom: 20px;
-}
-
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -94,5 +96,13 @@ watch(() => appStore.logs, () => {
   color: #303133;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+.no-logs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 30vh;
+  color: #909399;
 }
 </style>

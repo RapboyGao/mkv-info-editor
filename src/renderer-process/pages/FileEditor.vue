@@ -1,24 +1,24 @@
 <template>
-  <div class="step-content">
+  <div class="file-editor-container">
     <!-- 文件选择部分 -->
-    <div v-if="!appStore.mkvFile.isValid" class="file-selection">
-      <el-empty 
-        :description="t('messages.selectFile')"
-        :image-size="120"
+    <el-empty 
+      v-if="!appStore.mkvFile.isValid"
+      :description="t('messages.selectFile')"
+      :image-size="120"
+      class="file-selection"
+    >
+      <el-button 
+        type="primary" 
+        @click="selectFile" 
+        :loading="appStore.isProcessing"
       >
-        <el-button 
-          type="primary" 
-          @click="selectFile" 
-          :loading="appStore.isProcessing"
-        >
-          <el-icon><FolderOpened /></el-icon>
-          {{ t('actions.openFile') }}
-        </el-button>
-      </el-empty>
-    </div>
+        <el-icon><FolderOpened /></el-icon>
+        {{ t('actions.openFile') }}
+      </el-button>
+    </el-empty>
     
     <!-- 章节编辑部分 -->
-    <div v-else class="chapter-editor">
+    <template v-else>
       <!-- 文件信息组件 -->
       <MkvFileInfo
         :mkv-file="localMkvFile"
@@ -51,7 +51,7 @@
 
       <!-- 进度显示组件 -->
       <MkvProgressDisplay :progress="localMkvFile.progress" />
-    </div>
+    </template>
   </div>
 </template>
 
@@ -283,18 +283,17 @@ const saveChanges = async () => {
 </script>
 
 <style scoped>
+.file-editor-container {
+  padding: 20px;
+}
+
 .file-selection {
-  width: 100%;
-  margin: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 50px 0;
-}
-
-.chapter-editor {
-  width: 100%;
+  min-height: 400px;
 }
 
 .chapter-count-badge {
@@ -309,12 +308,5 @@ const saveChanges = async () => {
 
 .title-diff {
   margin-top: 5px;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 30px;
 }
 </style>

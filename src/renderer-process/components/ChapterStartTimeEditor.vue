@@ -16,79 +16,79 @@
       :modal="true"
       :z-index="9999"
     >
-      <div class="fullscreen-editor">
-        <el-form label-position="top" size="large">
-          <el-form-item label="章节标题">
-            <div class="editor-header">
-              <h2>{{ localChapter.title }}</h2>
-            </div>
-          </el-form-item>
+      <!-- 章节标题 -->
+      <div class="editor-header">
+        <h2>{{ localChapter.title }}</h2>
+      </div>
 
-          <el-form-item label="小时">
-            <el-input-number
-              v-model="hours"
-              :min="0"
-              :max="maxHours"
-              @change="updateTimeFromParts"
-              :precision="0"
-              size="large"
-              placeholder="小时 (HH)"
-            />
-          </el-form-item>
+      <!-- 时间输入区域 -->
+      <div class="time-inputs">
+        <div class="time-input-group">
+          <label>小时</label>
+          <el-input-number
+            v-model="hours"
+            :min="0"
+            :max="maxHours"
+            @change="updateTimeFromParts"
+            :precision="0"
+            size="large"
+            placeholder="小时 (HH)"
+          />
+        </div>
 
-          <el-form-item label="分钟">
-            <el-input-number
-              v-model="minutes"
-              :min="0"
-              :max="59"
-              @change="updateTimeFromParts"
-              :precision="0"
-              size="large"
-              placeholder="分钟 (MM)"
-            />
-          </el-form-item>
+        <span class="time-separator">:</span>
 
-          <el-form-item label="秒">
-            <el-input-number
-              v-model="seconds"
-              :min="0"
-              :max="59.999"
-              :step="0.1"
-              :precision="3"
-              @change="updateTimeFromParts"
-              size="large"
-              placeholder="秒 (SS.mmm)"
-            />
-          </el-form-item>
+        <div class="time-input-group">
+          <label>分钟</label>
+          <el-input-number
+            v-model="minutes"
+            :min="0"
+            :max="59"
+            @change="updateTimeFromParts"
+            :precision="0"
+            size="large"
+            placeholder="分钟 (MM)"
+          />
+        </div>
 
-          <el-form-item label="当前时间预览">
-            <div class="time-preview">
-              <h3>{{ chapterInstance.time }}</h3>
-            </div>
-          </el-form-item>
+        <span class="time-separator">:</span>
 
-          <el-form-item label="信息">
-            <div class="editor-info">
-              <p>总时长: {{ totalDurationFormatted }}</p>
-              <p class="warning" v-if="isTimeOverLimit">
-                ⚠️ 时间超过总时长，将自动调整
-              </p>
-            </div>
-          </el-form-item>
-        </el-form>
+        <div class="time-input-group">
+          <label>秒</label>
+          <el-input-number
+            v-model="seconds"
+            :min="0"
+            :max="59.999"
+            @change="updateTimeFromParts"
+            :precision="3"
+            size="large"
+            placeholder="秒 (SS.mmm)"
+          />
+        </div>
+      </div>
+
+      <!-- 当前时间预览 -->
+      <div class="time-preview">
+        <h3>{{ chapterInstance.time }}</h3>
+      </div>
+
+      <!-- 信息区域 -->
+      <div class="editor-info">
+        <p>总时长: {{ totalDurationFormatted }}</p>
+        <p class="warning" v-if="isTimeOverLimit">
+          ⚠️ 时间超过总时长，将自动调整
+        </p>
       </div>
 
       <template #footer>
-        <div class="dialog-footer">
-          <el-button type="default" size="large" @click="cancel">
-            <el-icon><Close /></el-icon>
-            取消
-          </el-button>
-          <el-button type="primary" size="large" @click="save">
-            <el-icon><Check /></el-icon>
-            保存
-          </el-button>
-        </div>
+        <el-button type="default" size="large" @click="cancel">
+          <el-icon><Close /></el-icon>
+          取消
+        </el-button>
+        <el-button type="primary" size="large" @click="save">
+          <el-icon><Check /></el-icon>
+          保存
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -235,24 +235,24 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.fullscreen-editor {
+.el-dialog__body {
   padding: 40px;
-  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 30px;
+  min-height: 60vh;
 }
 
 .editor-header {
   text-align: center;
-  margin-bottom: 20px;
 }
 
 .editor-header h2 {
   font-size: 2rem;
   color: #333;
+  margin: 0;
 }
 
 .time-inputs {
@@ -260,7 +260,6 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 20px;
-  margin: 30px 0;
   flex-wrap: wrap;
 }
 
@@ -269,6 +268,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  min-width: 120px;
 }
 
 .time-input-group label {
@@ -289,7 +289,7 @@ onMounted(() => {
   background: #f5f7fa;
   padding: 20px 40px;
   border-radius: 8px;
-  margin: 20px 0;
+  min-width: 300px;
 }
 
 .time-preview h3 {
@@ -301,7 +301,7 @@ onMounted(() => {
 .editor-info {
   text-align: center;
   color: #666;
-  margin: 20px 0;
+  margin: 10px 0;
 }
 
 .editor-info p {
@@ -313,7 +313,7 @@ onMounted(() => {
   font-weight: bold;
 }
 
-.dialog-footer {
+:deep(.el-dialog__footer) {
   display: flex;
   justify-content: center;
   gap: 20px;
