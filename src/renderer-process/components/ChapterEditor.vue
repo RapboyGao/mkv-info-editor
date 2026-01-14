@@ -1,37 +1,34 @@
 <template>
   <div class="step-content">
-    <div class="chapter-editor">
-      <!-- 文件信息组件 -->
-      <MkvFileInfo />
+    <!-- 文件信息组件 -->
+    <MkvFileInfo />
 
-      <!-- 章节表头组件 -->
-      <ChapterHeader @add="addChapter" />
+    <!-- 章节表头组件 -->
+    <ChapterHeader @add="addChapter" />
 
-      <!-- 章节表格组件 -->
-      <ChapterTable 
-        :chapters="appStore.mkvFile.chapters"
-        @chapter-updated="resortChapters"
-        @chapter-deleted="handleChapterDeleted"
-      />
-      
-      <!-- Metadata预览组件 -->
-      <MkvMetadataPreview />
+    <!-- 章节表格组件 -->
+    <ChapterTable
+      :chapters="appStore.mkvFile.chapters"
+      @chapter-updated="resortChapters"
+      @chapter-deleted="handleChapterDeleted"
+    />
 
-      <!-- 操作按钮组件 -->
-      <ActionButtons @save="saveChanges" />
-    </div>
+    <!-- Metadata预览组件 -->
+    <MkvMetadataPreview />
+
+    <!-- 操作按钮组件 -->
+    <ActionButtons @save="saveChanges" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useAppStore } from "../stores/appStore";
 import { ElMessage } from "element-plus";
-import { Delete } from "@element-plus/icons-vue";
-import MkvFileInfo from "./MkvFileInfo.vue";
-import MkvMetadataPreview from "./MkvMetadataPreview.vue";
+import { useAppStore } from "../stores/appStore";
 import ActionButtons from "./ActionButtons.vue";
 import ChapterHeader from "./ChapterHeader.vue";
 import ChapterTable from "./ChapterTable.vue";
+import MkvFileInfo from "./MkvFileInfo.vue";
+import MkvMetadataPreview from "./MkvMetadataPreview.vue";
 
 const appStore = useAppStore();
 
@@ -117,8 +114,10 @@ const saveChanges = async () => {
 
     // 选择输出文件路径
     appStore.setProcessingMessage("正在选择输出文件...");
-    const outputFileName = getFileName(appStore.mkvFile.filePath)
-      .replace(".mkv", "_edited.mkv");
+    const outputFileName = getFileName(appStore.mkvFile.filePath).replace(
+      ".mkv",
+      "_edited.mkv"
+    );
     const outputFilePath = await window.electronAPI.saveMkvFile(outputFileName);
 
     if (!outputFilePath) {
