@@ -41,6 +41,10 @@ export const useAppStore = defineStore('app', {
     setFFmpegDownloaded(downloaded: boolean) {
       this.ffmpegDownloaded = downloaded;
     },
+
+    updateMkvFile(mkvFile: MkvFile) {
+      this.mkvFile = mkvFile;
+    },
     
     // 设置MKV文件信息
     setMkvFile(fileData: MkvFileData | null) {
