@@ -27,7 +27,7 @@
       <div class="card-header">
         <span>FFmpeg执行日志</span>
         <el-button 
-          type="link" 
+          type="text" 
           @click="appStore.clearLogs" 
           size="small"
         >

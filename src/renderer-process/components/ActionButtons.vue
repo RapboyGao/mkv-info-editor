@@ -2,24 +2,17 @@
   <div class="action-buttons">
     <el-button type="default" @click="backToFileSelection">
       <el-icon><Back /></el-icon>
-      返回文件选择
     </el-button>
-    <el-button
-      type="success"
-      @click="saveChanges"
-      :loading="isProcessing"
-      size="large"
-    >
+    <el-button type="success" @click="saveChanges" :loading="isProcessing">
       <el-icon><Check /></el-icon>
-      保存更改
     </el-button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useAppStore } from '../stores/appStore';
-import { Back, Check } from '@element-plus/icons-vue';
+import { computed } from "vue";
+import { useAppStore } from "../stores/appStore";
+import { Back, Check } from "@element-plus/icons-vue";
 
 const appStore = useAppStore();
 
@@ -28,18 +21,21 @@ const isProcessing = computed(() => appStore.isProcessing);
 
 // 返回文件选择
 const backToFileSelection = () => {
+  // 重置MKV文件信息
+  appStore.setMkvFile(null);
+  // 返回文件选择步骤
   appStore.setCurrentStep(1);
 };
 
 // 保存更改
 const saveChanges = () => {
   // 触发父组件的保存事件
-  emit('save');
+  emit("save");
 };
 
 // 定义事件
 const emit = defineEmits<{
-  (e: 'save'): void;
+  (e: "save"): void;
 }>();
 </script>
 
