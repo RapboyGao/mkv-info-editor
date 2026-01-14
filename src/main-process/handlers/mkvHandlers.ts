@@ -55,82 +55,7 @@ function executeFFCommand(args: string[], mainWindow: BrowserWindow | null): Pro
   });
 }
 
-/**
- * 获取MKV文件时长
- * @param filePath MKV文件路径
- * @param mainWindow 主窗口对象，用于日志输出
- * @returns 视频总时长（秒）
- */
-async function handleGetMkvDuration(filePath: string, mainWindow: BrowserWindow): Promise<number> {
-  console.log('handleGetMkvDuration called with filePath:', filePath);
-  try {
-    // 方法：直接解析ffmpeg -i命令的输出，添加null输出以避免错误
-    // 构建命令，使用info级别输出以获取duration信息
-    const command = [
-      '-i',
-      filePath,
-      '-f',
-      'ffmetadata', // 输出格式为ffmetadata
-      '-y', // 自动覆盖输出文件
-      process.platform === 'win32' ? 'NUL' : '/dev/null', // 输出到空设备
-      '-v',
-      'info', // 使用info级别以显示duration信息
-    ];
 
-    const output = await executeFFCommand(command, mainWindow);
-    console.log('FFmpeg output:', output);
-
-    // 从输出中提取时长信息
-    // 改进的正则表达式：支持更灵活的格式，如Duration: 02:29:46.37, Duration: 02:29:46, Duration: 2:29:46.371等
-    const durationMatch = output.match(/Duration:\s*(\d+):(\d+):(\d+)(?:\.(\d+))?/i);
-    if (durationMatch) {
-      const [, hours, minutes, seconds, milliseconds = '0'] = durationMatch;
-      console.log('Duration match groups:', hours, minutes, seconds, milliseconds);
-      
-      // 计算总秒数：修复毫秒转换逻辑，根据实际位数计算
-      const totalSeconds = 
-        parseFloat(hours) * 3600 + 
-        parseFloat(minutes) * 60 + 
-        parseFloat(seconds) + 
-        parseFloat(milliseconds) / Math.pow(10, milliseconds.length);
-      
-      console.log('Calculated total seconds:', totalSeconds);
-      return totalSeconds;
-    } else {
-      console.error('No duration match found in output:', output);
-    }
-
-    console.error('Failed to extract duration from FFmpeg output:', output);
-    // 捕获错误，使用默认值100小时
-    return 100 * 3600;
-  } catch (error) {
-    console.error('Failed to get MKV duration:', error);
-    // 捕获错误，使用默认值100小时
-    return 100 * 3600;
-  }
-}
-
-/**
- * 导出MKV文件的元数据
- * @param inputPath MKV文件路径
- * @param mainWindow 主窗口对象，用于日志输出
- * @returns 生成的元数据文件路径
- */
-async function handleExportMetadata(inputPath: string, mainWindow: BrowserWindow): Promise<string> {
-  const tempDir = app.getPath('temp');
-  const metadataPath = path.join(tempDir, `metadata_${Date.now()}.txt`);
-
-  try {
-    await executeFFCommand(
-      ['-i', inputPath, '-f', 'ffmetadata', metadataPath],
-      mainWindow
-    );
-    return metadataPath;
-  } catch (error) {
-    console.error('Failed to export metadata:', error);
-    throw error;
-  }
-}
 
 /**
  * 导入元数据到MKV文件
@@ -346,16 +271,6 @@ async function handleGetMkvFileInfo(filePath: string, mainWindow: BrowserWindow)
  * @param mainWindow 主窗口对象，用于日志输出和进程管理
  */
 export function registerMKVHandlers(mainWindow: BrowserWindow) {
-  // 获取MKV文件时长
-  ipcMain.handle('get-mkv-duration', async (_, filePath: string) => {
-    return handleGetMkvDuration(filePath, mainWindow);
-  });
-
-  // 导出元数据
-  ipcMain.handle('export-metadata', async (_, inputPath: string) => {
-    return handleExportMetadata(inputPath, mainWindow);
-  });
-
   // 导入元数据
   ipcMain.handle(
     'import-metadata',
