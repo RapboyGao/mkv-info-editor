@@ -1,6 +1,7 @@
 // 前后端通用类型定义
 
 import { Chapter, ChapterData } from './chapter';
+import { MKVProgress } from './progress';
 
 export interface MkvFileData {
   id: string;
@@ -13,6 +14,7 @@ export interface MkvFileData {
   bitRate: number;
   size: number;
   chapters: ChapterData[];
+  progress?: MKVProgress; // FFmpeg进度信息，可选属性
 }
 
 export class MkvFile implements MkvFileData {
@@ -26,6 +28,7 @@ export class MkvFile implements MkvFileData {
   bitRate: number;
   size: number;
   chapters: ChapterData[];
+  progress?: MKVProgress;
 
   constructor(data: MkvFileData) {
     this.id = data.id;
@@ -38,6 +41,7 @@ export class MkvFile implements MkvFileData {
     this.bitRate = data.bitRate || 0;
     this.size = data.size || 0;
     this.chapters = data.chapters || [];
+    this.progress = data.progress;
   }
 
   /**
