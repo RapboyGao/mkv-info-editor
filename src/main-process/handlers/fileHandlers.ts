@@ -13,7 +13,7 @@ export function registerFileHandlers(mainWindow: BrowserWindow) {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openFile'],
       filters: [
-        { name: 'MKV Files', extensions: ['mkv'] },
+        { name: 'Video Files', extensions: ['mkv', 'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'm4v', 'ts', 'mts', 'mpeg', 'mpg'] },
         { name: 'All Files', extensions: ['*'] },
       ],
     });
