@@ -24,7 +24,7 @@
             <span v-else-if="appStore.currentStep === 2">章节编辑</span>
             <el-badge 
               v-if="appStore.currentStep === 2" 
-              :value="appStore.chapters.length" 
+              :value="appStore.mkvFile?.chapters.length || 0" 
               type="primary" 
               class="chapter-count-badge" 
             />

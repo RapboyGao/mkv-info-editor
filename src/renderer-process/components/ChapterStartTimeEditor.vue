@@ -120,13 +120,13 @@ const emit = defineEmits<{
 const dialogVisible = ref(false);
 
 // Total duration in seconds and milliseconds
-const totalDuration = appStore.totalDuration;
+const totalDuration = computed(() => appStore.mkvFile?.duration || 100 * 3600);
 const totalDurationFormatted = computed(() => {
-  return secondsToTimeString(totalDuration);
+  return secondsToTimeString(totalDuration.value);
 });
 
 // Maximum hours based on total duration
-const maxHours = computed(() => Math.floor(totalDuration / 3600));
+const maxHours = computed(() => Math.floor(totalDuration.value / 3600));
 
 // Local copy of the chapter
 const localChapter = ref<ChapterData>({ ...props.chapter });
@@ -179,8 +179,8 @@ const updateTimeFromParts = () => {
   let totalSeconds = hours.value * 3600 + minutes.value * 60 + seconds.value;
 
   // Ensure time is within limits
-  if (totalSeconds > totalDuration) {
-    totalSeconds = totalDuration;
+  if (totalSeconds > totalDuration.value) {
+    totalSeconds = totalDuration.value;
     isTimeOverLimit.value = true;
 
     // Update parts to match the clamped value
@@ -192,8 +192,10 @@ const updateTimeFromParts = () => {
     isTimeOverLimit.value = false;
   }
 
-  // Update chapter start property (in milliseconds)
-  localChapter.value.start = totalSeconds * 1000;
+  // Get denominator from timeBase
+  const denominator = localChapter.value.timeBase ? parseInt(localChapter.value.timeBase.split('/')[1]) : 1000;
+  // Update chapter start property based on timeBase
+  localChapter.value.start = totalSeconds * denominator;
 };
 
 // Open the modal
@@ -212,24 +214,11 @@ const save = () => {
   updateTimeFromParts();
 
   // Update the chapter in the parent
-  appStore.chapters[props.chapterIndex] = { ...localChapter.value };
-
-  // Sort chapters by start time
-  appStore.chapters.sort((a, b) => a.start - b.start);
-
-  // Update all chapters' end times
-  for (let i = 0; i < appStore.chapters.length; i++) {
-    const currentChapter = appStore.chapters[i];
-    const nextChapter = appStore.chapters[i + 1];
-
-    if (nextChapter) {
-      // If there's a next chapter, end time is next chapter's start time
-      currentChapter.end = nextChapter.start;
-    } else {
-      // Last chapter, end time is total duration (in milliseconds)
-      currentChapter.end = totalDuration * 1000;
-    }
-  }
+  appStore.updateChapterTime(
+    localChapter.value.id,
+    localChapter.value.start,
+    localChapter.value.end
+  );
 
   // Close modal
   dialogVisible.value = false;

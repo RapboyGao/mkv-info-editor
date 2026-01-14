@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ChapterData, Chapter } from '../../shared/types';
+import { ChapterData, MkvFile, MkvFileData } from '../../shared/types';
 
 export const useAppStore = defineStore('app', {
   state: () => ({
@@ -8,10 +8,7 @@ export const useAppStore = defineStore('app', {
     ffmpegDownloaded: false,
     
     // 文件和章节信息
-    selectedFilePath: null as string | null,
-    metadataPath: null as string | null,
-    chapters: [] as ChapterData[],
-    totalDuration: 100 * 3600, // 默认100小时，实际会被替换为真实时长
+    mkvFile: null as MkvFile | null,
     
     // 状态管理
     isProcessing: false,
@@ -34,24 +31,72 @@ export const useAppStore = defineStore('app', {
       this.ffmpegDownloaded = downloaded;
     },
     
-    // 设置选中的文件路径
-    setSelectedFilePath(filePath: string | null) {
-      this.selectedFilePath = filePath;
-    },
-    
-    // 设置元数据路径
-    setMetadataPath(path: string | null) {
-      this.metadataPath = path;
+    // 设置MKV文件信息
+    setMkvFile(fileData: MkvFileData | null) {
+      this.mkvFile = fileData ? new MkvFile(fileData) : null;
     },
     
     // 设置章节列表
     setChapters(chapters: ChapterData[]) {
-      this.chapters = chapters;
+      if (this.mkvFile) {
+        this.mkvFile.setChapters(chapters);
+      }
     },
     
     // 设置总时长
     setTotalDuration(duration: number) {
-      this.totalDuration = duration;
+      if (this.mkvFile) {
+        this.mkvFile.setDuration(duration);
+      }
+    },
+    
+    // 添加章节
+    addChapter(chapter: ChapterData) {
+      if (this.mkvFile) {
+        this.mkvFile.addChapter(chapter);
+      }
+    },
+    
+    // 删除章节
+    deleteChapter(chapterId: string) {
+      if (this.mkvFile) {
+        return this.mkvFile.deleteChapter(chapterId);
+      }
+      return false;
+    },
+    
+    // 更新章节标题
+    updateChapterTitle(chapterId: string, title: string) {
+      if (this.mkvFile) {
+        return this.mkvFile.updateChapterTitle(chapterId, title);
+      }
+      return false;
+    },
+    
+    // 更新章节时间
+    updateChapterTime(chapterId: string, start: number, end: number) {
+      if (this.mkvFile) {
+        const result = this.mkvFile.updateChapterTime(chapterId, start, end);
+        // 更新章节结束时间
+        this.mkvFile.updateChapterEndTimes();
+        return result;
+      }
+      return false;
+    },
+    
+    // 更新章节结束时间
+    updateChapterEndTimes() {
+      if (this.mkvFile) {
+        this.mkvFile.updateChapterEndTimes();
+      }
+    },
+    
+    // 获取所有章节的metadata字符串
+    getChaptersMetadata() {
+      if (this.mkvFile) {
+        return this.mkvFile.getChaptersMetadata();
+      }
+      return '';
     },
     
     // 更新处理状态

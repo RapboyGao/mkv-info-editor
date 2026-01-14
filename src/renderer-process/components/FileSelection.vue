@@ -2,7 +2,7 @@
   <div class="step-content">
     <div class="file-selection">
       <el-empty 
-        v-if="!appStore.selectedFilePath" 
+        v-if="!appStore.mkvFile" 
         description="请选择要编辑的MKV文件"
         :image-size="120"
       >
@@ -19,24 +19,16 @@
       <div v-else class="file-info">
         <el-descriptions :column="1" border>
           <el-descriptions-item label="文件名">
-            <el-tag type="info">{{ getFileName(appStore.selectedFilePath) }}</el-tag>
+            <el-tag type="info">{{ getFileName(appStore.mkvFile?.filePath || "") }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="文件路径">
-            <div class="file-path">{{ appStore.selectedFilePath }}</div>
+            <div class="file-path">{{ appStore.mkvFile?.filePath }}</div>
           </el-descriptions-item>
           <el-descriptions-item label="操作">
             <div class="file-actions">
               <el-button 
-                type="primary" 
-                @click="parseChapters" 
-                :loading="appStore.isProcessing"
-              >
-                <el-icon><DataAnalysis /></el-icon>
-                解析章节信息
-              </el-button>
-              <el-button 
                 type="default" 
-                @click="appStore.setSelectedFilePath(null)"
+                @click="appStore.setMkvFile(null)"
               >
                 <el-icon><Refresh /></el-icon>
                 重新选择
@@ -73,57 +65,25 @@ const selectFile = async () => {
       return;
     }
     
-    appStore.setSelectedFilePath(filePath);
+    appStore.setProcessingMessage('正在获取文件信息...');
+    appStore.updateFFmpegProgress(0);
+    
+    // 一次性获取MKV文件的所有信息
+    const mkvFileData = await window.electronAPI.getMkvFileInfo(filePath);
+    
+    // 更新MKV文件信息
+    appStore.setMkvFile(mkvFileData);
+    
+    // 进入下一步
+    appStore.setCurrentStep(2);
     ElMessage({
-      message: '文件选择成功，正在解析章节信息...',
+      message: `成功解析 ${mkvFileData.chapters.length} 个章节！`,
       type: 'success'
     });
-    
-    // 选择文件后立即解析章节信息
-    await parseChapters();
   } catch (error) {
     console.error('Error selecting file:', error);
     ElMessage({
-      message: `文件选择失败: ${error instanceof Error ? error.message : String(error)}`,
-      type: 'error'
-    });
-    appStore.setProcessing(false);
-  }
-};
-
-// 解析章节信息
-const parseChapters = async () => {
-  if (!appStore.selectedFilePath) return;
-  
-  try {
-    appStore.setProcessing(true, '正在获取文件时长...');
-    appStore.updateFFmpegProgress(0);
-    
-    // 1. 获取MKV文件总时长
-    const totalDuration = await window.electronAPI.getMkvDuration(appStore.selectedFilePath);
-    // 更新总时长到store
-    appStore.setTotalDuration(totalDuration);
-    
-    appStore.setProcessingMessage('正在导出元数据...');
-    // 2. 导出元数据
-    const metadata = await window.electronAPI.exportMetadata(appStore.selectedFilePath);
-    appStore.setMetadataPath(metadata);
-    
-    appStore.setProcessingMessage('正在解析章节信息...');
-    // 3. 解析元数据，提取章节信息，传递总时长
-    const chaptersList = await window.electronAPI.parseMetadata(metadata, totalDuration);
-    appStore.setChapters(chaptersList);
-    
-    // 4. 进入下一步
-    appStore.setCurrentStep(2);
-    ElMessage({
-      message: `成功解析 ${chaptersList.length} 个章节！`,
-      type: 'success'
-    });
-  } catch (error) {
-    console.error('Error parsing chapters:', error);
-    ElMessage({
-      message: `章节解析失败: ${error instanceof Error ? error.message : String(error)}`,
+      message: `文件处理失败: ${error instanceof Error ? error.message : String(error)}`,
       type: 'error'
     });
   } finally {

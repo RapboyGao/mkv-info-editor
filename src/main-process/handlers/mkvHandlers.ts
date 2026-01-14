@@ -2,6 +2,8 @@ import { BrowserWindow, app, ipcMain } from 'electron';
 import { spawn } from 'child_process';
 import path from 'node:path';
 import { getFFmpegLocalPath } from '../../utils/ffmpegDownloader';
+import { MkvFileData, ChapterData } from '../../shared/types';
+import fs from 'fs-extra';
 
 // 执行FFmpeg命令，带日志输出
 function executeFFCommand(args: string[], mainWindow: BrowserWindow | null): Promise<string> {
@@ -171,6 +173,124 @@ async function handleImportMetadata(
 }
 
 /**
+ * 获取MKV文件的完整信息（时长、元数据、章节）
+ * @param filePath MKV文件路径
+ * @param mainWindow 主窗口对象，用于日志输出
+ * @returns 包含完整信息的MkvFileData对象
+ */
+async function handleGetMkvFileInfo(filePath: string, mainWindow: BrowserWindow): Promise<MkvFileData> {
+  try {
+    // 1. 获取MKV文件总时长
+    const totalDuration = await handleGetMkvDuration(filePath, mainWindow);
+    
+    // 2. 导出元数据
+    const metadataPath = await handleExportMetadata(filePath, mainWindow);
+    
+    // 3. 读取并解析元数据内容
+    const content = await fs.readFile(metadataPath, "utf-8");
+    
+    // 4. 解析元数据，提取章节信息
+    const chaptersList: ChapterData[] = [];
+    let currentChapter: Partial<ChapterData> = {};
+    let timebase = "1/1000"; // 默认时间基准为毫秒
+    let title = "";
+    let encoder = "";
+    
+    for (const line of content.split('\n')) {
+      const trimmedLine = line.trim();
+      
+      // 解析全局元数据
+      if (trimmedLine.startsWith("title=")) {
+        title = trimmedLine.split("=")[1];
+      } else if (trimmedLine.startsWith("encoder=")) {
+        encoder = trimmedLine.split("=")[1];
+      }
+      
+      // 解析章节信息
+      if (trimmedLine.startsWith("[CHAPTER]")) {
+        // 新章节开始，保存之前的章节（如果有）
+        if (currentChapter.start !== undefined) {
+          chaptersList.push({
+            id: Math.random().toString(36).substring(2, 10),
+            start: currentChapter.start,
+            end: 0, // 稍后计算
+            title: currentChapter.title || "",
+            originalTitle: currentChapter.title || "",
+            timeBase: currentChapter.timeBase || (timebase as `${number}/${number}`),
+          });
+        }
+        // 重置当前章节
+        currentChapter = {};
+      } else if (trimmedLine.startsWith("TIMEBASE=")) {
+        // 解析TIMEBASE
+        const timebaseStr = trimmedLine.split("=")[1];
+        if (/^\d+\/\d+$/.test(timebaseStr)) {
+          timebase = timebaseStr;
+          currentChapter.timeBase = timebase as `${number}/${number}`;
+        }
+      } else if (trimmedLine.startsWith("START=")) {
+        // 解析开始时间
+        const start = parseInt(trimmedLine.split("=")[1]);
+        currentChapter.start = start;
+        if (!currentChapter.timeBase) {
+          currentChapter.timeBase = timebase as `${number}/${number}`;
+        }
+      } else if (trimmedLine.startsWith("title=")) {
+        // 解析章节标题
+        currentChapter.title = trimmedLine.split("=")[1];
+      }
+    }
+    
+    // 保存最后一个章节
+    if (currentChapter.start !== undefined) {
+      chaptersList.push({
+        id: Math.random().toString(36).substring(2, 10),
+        start: currentChapter.start,
+        end: 0, // 稍后计算
+        title: currentChapter.title || "",
+        originalTitle: currentChapter.title || "",
+        timeBase: currentChapter.timeBase || (timebase as `${number}/${number}`),
+      });
+    }
+    
+    // 按开始时间排序章节
+    chaptersList.sort((a, b) => a.start - b.start);
+    
+    // 计算每个章节的结束时间
+    for (let i = 0; i < chaptersList.length; i++) {
+      const chapter = chaptersList[i];
+      const nextChapter = chaptersList[i + 1];
+      
+      if (nextChapter) {
+        chapter.end = nextChapter.start;
+      } else {
+        // 最后一个章节，结束时间设置为整个MKV的总时长
+        const denominator = parseInt(chapter.timeBase?.split("/")[1] || "1000");
+        chapter.end = totalDuration * denominator;
+      }
+    }
+    
+    // 清理临时文件
+    await fs.unlink(metadataPath).catch(error => {
+      console.warn('Failed to delete temporary metadata file:', error);
+    });
+    
+    // 返回完整的MKV文件信息
+    return {
+      filePath,
+      duration: totalDuration,
+      metadata: content,
+      chapters: chaptersList,
+      title,
+      encoder,
+    };
+  } catch (error) {
+    console.error('Failed to get MKV file info:', error);
+    throw error;
+  }
+}
+
+/**
  * 注册 MKV 处理相关的 IPC 处理程序
  * @param mainWindow 主窗口对象，用于日志输出和进程管理
  */
@@ -192,4 +312,9 @@ export function registerMKVHandlers(mainWindow: BrowserWindow) {
       return handleImportMetadata(inputPath, metadataPath, outputPath, mainWindow);
     }
   );
+
+  // 获取MKV文件完整信息
+  ipcMain.handle('get-mkv-file-info', async (_, filePath: string) => {
+    return handleGetMkvFileInfo(filePath, mainWindow);
+  });
 }

@@ -2,7 +2,7 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 import { contextBridge, ipcRenderer } from 'electron';
-import { ChapterData } from '../shared/types';
+import { ChapterData, MkvFileData } from '../shared/types';
 
 // 定义IPC通信接口
 export interface IpcApi {
@@ -15,6 +15,7 @@ export interface IpcApi {
   exportMetadata: (inputPath: string) => Promise<string>;
   importMetadata: (inputPath: string, metadataPath: string, outputPath: string) => Promise<boolean>;
   getMkvDuration: (filePath: string) => Promise<number>;
+  getMkvFileInfo: (filePath: string) => Promise<MkvFileData>;
   
   // 文件内容操作
   readFile: (filePath: string) => Promise<string>;
@@ -22,7 +23,6 @@ export interface IpcApi {
   deleteFile: (filePath: string) => Promise<boolean>;
   
   // 元数据操作
-  parseMetadata: (metadataPath: string, totalDuration?: number) => Promise<ChapterData[]>;
   updateMetadata: (originalMetadataPath: string, chapters: ChapterData[]) => Promise<string>;
 }
 
@@ -38,6 +38,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   importMetadata: (inputPath: string, metadataPath: string, outputPath: string) => 
     ipcRenderer.invoke('import-metadata', inputPath, metadataPath, outputPath),
   getMkvDuration: (filePath: string) => ipcRenderer.invoke('get-mkv-duration', filePath),
+  getMkvFileInfo: (filePath: string) => ipcRenderer.invoke('get-mkv-file-info', filePath),
   
   // 文件内容操作
   readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
@@ -45,16 +46,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteFile: (filePath: string) => ipcRenderer.invoke('delete-file', filePath),
   
   // 元数据操作
-  parseMetadata: (metadataPath: string, totalDuration?: number) => ipcRenderer.invoke('parse-metadata', metadataPath, totalDuration),
-  updateMetadata: (originalMetadataPath: string, chapters: any[]) => ipcRenderer.invoke('update-metadata', originalMetadataPath, chapters),
+  updateMetadata: (originalMetadataPath: string, chapters: ChapterData[]) => ipcRenderer.invoke('update-metadata', originalMetadataPath, chapters),
 });
 
 // 暴露ipcRenderer的部分方法用于接收事件
 contextBridge.exposeInMainWorld('ipcRenderer', {
-  on: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => {
+  on: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: unknown[]) => void) => {
     ipcRenderer.on(channel, listener);
   },
-  off: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => {
+  off: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: unknown[]) => void) => {
     ipcRenderer.off(channel, listener);
   },
 });
