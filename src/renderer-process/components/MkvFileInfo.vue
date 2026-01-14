@@ -25,14 +25,16 @@
     <el-form label-width="80px" size="small">
       <el-form-item label="标题">
         <el-input
-          v-model="appStore.mkvFile.title"
+          v-model="localTitle"
           placeholder="请输入文件标题"
+          @input="handleTitleChange"
         />
       </el-form-item>
       <el-form-item label="编码器">
         <el-input
-          v-model="appStore.mkvFile.encoder"
+          v-model="localEncoder"
           placeholder="请输入编码器信息"
+          @input="handleEncoderChange"
         />
       </el-form-item>
     </el-form>
@@ -42,34 +44,40 @@
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
 import { computed, ref, watch } from "vue";
-import { useAppStore } from "../stores/appStore";
+import { MkvFile } from "@/shared";
 
-const appStore = useAppStore();
+// 定义props
+const props = defineProps<{
+  mkvFile: MkvFile;
+}>();
 
-// 获取mkvFile对象
-const mkvFile = computed(() => appStore.mkvFile);
+// 定义emit
+const emit = defineEmits<{
+  (e: 'update:title', value: string): void;
+  (e: 'update:encoder', value: string): void;
+}>();
 
-// 保存状态
-const isSaving = ref(false);
+// 本地状态，用于双向绑定
+const localTitle = ref(props.mkvFile.title);
+const localEncoder = ref(props.mkvFile.encoder);
 
-// 保存修改
-const saveChanges = () => {
-  try {
-    isSaving.value = true;
+// 监听props变化，更新本地状态
+watch(() => props.mkvFile.title, (newTitle) => {
+  localTitle.value = newTitle;
+});
 
-    ElMessage({
-      message: "文件信息已更新！",
-      type: "success",
-    });
-  } catch (error) {
-    console.error("Failed to save file info:", error);
-    ElMessage({
-      message: `保存失败: ${error instanceof Error ? error.message : String(error)}`,
-      type: "error",
-    });
-  } finally {
-    isSaving.value = false;
-  }
+watch(() => props.mkvFile.encoder, (newEncoder) => {
+  localEncoder.value = newEncoder;
+});
+
+// 处理标题变化
+const handleTitleChange = () => {
+  emit('update:title', localTitle.value);
+};
+
+// 处理编码器变化
+const handleEncoderChange = () => {
+  emit('update:encoder', localEncoder.value);
 };
 </script>
 

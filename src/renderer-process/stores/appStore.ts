@@ -58,49 +58,6 @@ export const useAppStore = defineStore('app', {
       });
     },
     
-    // 设置章节列表
-    setChapters(chapters: ChapterData[]) {
-      this.mkvFile.setChapters(chapters);
-    },
-    
-    // 设置总时长
-    setTotalDuration(duration: number) {
-      this.mkvFile.setDuration(duration);
-    },
-    
-    // 添加章节
-    addChapter(chapter: ChapterData) {
-      this.mkvFile.addChapter(chapter);
-    },
-    
-    // 删除章节
-    deleteChapter(chapterId: string) {
-      return this.mkvFile.deleteChapter(chapterId);
-    },
-    
-    // 更新章节标题
-    updateChapterTitle(chapterId: string, title: string) {
-      return this.mkvFile.updateChapterTitle(chapterId, title);
-    },
-    
-    // 更新章节时间
-    updateChapterTime(chapterId: string, start: number, end: number) {
-      const result = this.mkvFile.updateChapterTime(chapterId, start, end);
-      // 更新章节结束时间
-      this.mkvFile.updateChapterEndTimes();
-      return result;
-    },
-    
-    // 更新章节结束时间
-    updateChapterEndTimes() {
-      this.mkvFile.updateChapterEndTimes();
-    },
-    
-    // 获取所有章节的metadata字符串
-    getChaptersMetadata() {
-      return this.mkvFile.getChaptersMetadata();
-    },
-    
     // 更新处理状态
     setProcessing(isProcessing: boolean, message = '') {
       this.isProcessing = isProcessing;

@@ -8,7 +8,7 @@
             type="primary" 
             @click="copyMetadata" 
             size="small"
-            :disabled="!mkvFile.isValid"
+            :disabled="!isValid"
           >
             <el-icon><DocumentCopy /></el-icon>
             复制Metadata
@@ -17,14 +17,14 @@
       </template>
       
       <div class="preview-content">
-        <div v-if="!mkvFile.isValid" class="empty-state">
+        <div v-if="!isValid" class="empty-state">
           <el-empty 
             description="请先选择MKV文件"
             :image-size="80"
           />
         </div>
         <code v-else :language="'ini'" class="metadata-code" :wrap="true">
-          {{ mkvFile.fullMetadata || '无Metadata数据' }}
+          {{ fullMetadata || '无Metadata数据' }}
         </code>
       </div>
     </el-card>
@@ -33,24 +33,28 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useAppStore } from '../stores/appStore';
 import { ElMessage } from 'element-plus';
 import { DocumentCopy } from '@element-plus/icons-vue';
+import { MkvFile } from '@/shared';
 
-const appStore = useAppStore();
+// 定义props
+const props = defineProps<{
+  mkvFile: MkvFile;
+}>();
 
-// 获取mkvFile对象
-const mkvFile = computed(() => appStore.mkvFile);
+// 计算属性
+const isValid = computed(() => props.mkvFile.isValid);
+const fullMetadata = computed(() => props.mkvFile.fullMetadata);
 
 // 复制Metadata到剪贴板
 const copyMetadata = async () => {
-  if (!mkvFile.value.fullMetadata) {
+  if (!fullMetadata.value) {
     ElMessage.warning('没有可复制的Metadata数据');
     return;
   }
   
   try {
-    await navigator.clipboard.writeText(mkvFile.value.fullMetadata);
+    await navigator.clipboard.writeText(fullMetadata.value);
     ElMessage.success('Metadata已复制到剪贴板');
   } catch (error) {
     console.error('Failed to copy metadata:', error);

@@ -96,23 +96,21 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { useAppStore } from "../stores/appStore";
 import { ElMessage } from "element-plus";
 import { Check, Close } from "@element-plus/icons-vue";
 import type { ChapterData } from "@/shared";
 import { Chapter } from "@/shared";
 
-const appStore = useAppStore();
-
 // Props
 const props = defineProps<{
   chapter: ChapterData;
   chapterIndex: number;
+  totalDuration: number; // 添加总时长作为prop
 }>();
 
 // Emits
 const emit = defineEmits<{
-  (e: "save"): void;
+  (e: "save", chapter: ChapterData): void;
   (e: "cancel"): void;
 }>();
 
@@ -120,13 +118,12 @@ const emit = defineEmits<{
 const dialogVisible = ref(false);
 
 // Total duration in seconds and milliseconds
-const totalDuration = computed(() => appStore.mkvFile?.duration || 100 * 3600);
 const totalDurationFormatted = computed(() => {
-  return secondsToTimeString(totalDuration.value);
+  return secondsToTimeString(props.totalDuration);
 });
 
 // Maximum hours based on total duration
-const maxHours = computed(() => Math.floor(totalDuration.value / 3600));
+const maxHours = computed(() => Math.floor(props.totalDuration / 3600));
 
 // Local copy of the chapter
 const localChapter = ref<ChapterData>({ ...props.chapter });
@@ -179,8 +176,8 @@ const updateTimeFromParts = () => {
   let totalSeconds = hours.value * 3600 + minutes.value * 60 + seconds.value;
 
   // Ensure time is within limits
-  if (totalSeconds > totalDuration.value) {
-    totalSeconds = totalDuration.value;
+  if (totalSeconds > props.totalDuration) {
+    totalSeconds = props.totalDuration;
     isTimeOverLimit.value = true;
 
     // Update parts to match the clamped value
@@ -213,13 +210,6 @@ const save = () => {
   // Ensure final validation
   updateTimeFromParts();
 
-  // Update the chapter in the parent
-  appStore.updateChapterTime(
-    localChapter.value.id,
-    localChapter.value.start,
-    localChapter.value.end
-  );
-
   // Close modal
   dialogVisible.value = false;
 
@@ -228,7 +218,8 @@ const save = () => {
     type: "success",
   });
 
-  emit("save");
+  // Emit the updated chapter data to parent
+  emit("save", localChapter.value);
 };
 
 // Cancel changes

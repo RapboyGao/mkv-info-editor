@@ -6,7 +6,8 @@
         <ChapterStartTimeEditor
           :chapter="scope.row"
           :chapter-index="scope.$index"
-          @save="handleSave"
+          :total-duration="totalDuration"
+          @save="handleStartTimeSave"
           @cancel="handleCancel"
         />
       </template>
@@ -28,6 +29,7 @@
           v-model="scope.row.title"
           placeholder="请输入章节标题"
           style="width: 100%"
+          @input="handleTitleChange(scope.$index, scope.row.title)"
         />
       </template>
     </el-table-column>
@@ -66,22 +68,39 @@ import { Chapter, ChapterData } from "@/shared";
 // Props定义
 const props = defineProps<{
   chapters: ChapterData[];
+  totalDuration?: number;
 }>();
 
 // Emits定义
 const emit = defineEmits<{
   (e: "chapter-updated"): void;
   (e: "chapter-deleted", index: number): void;
+  (e: "chapter-title-updated", index: number, title: string): void;
+  (e: "chapter-time-updated", chapter: ChapterData): void;
 }>();
+
+// 默认总时长
+const defaultTotalDuration = 100 * 3600; // 默认100小时
+
+// 获取总时长
+const totalDuration = computed(() => {
+  return props.totalDuration || defaultTotalDuration;
+});
 
 // 创建Chapter实例数组，用于访问计算属性
 const chapterInstances = computed(() => {
   return props.chapters.map((chapter) => new Chapter(chapter));
 });
 
-// 保存时间编辑
-const handleSave = () => {
+// 保存开始时间编辑
+const handleStartTimeSave = (updatedChapter: ChapterData) => {
+  emit("chapter-time-updated", updatedChapter);
   emit("chapter-updated");
+};
+
+// 处理标题变化
+const handleTitleChange = (index: number, title: string) => {
+  emit("chapter-title-updated", index, title);
 };
 
 // 取消时间编辑

@@ -10,33 +10,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { useAppStore } from "../stores/appStore";
 import { Back, Check } from "@element-plus/icons-vue";
 
-const appStore = useAppStore();
-
-// 从store获取处理状态
-const isProcessing = computed(() => appStore.isProcessing);
-
-// 返回文件选择
-const backToFileSelection = () => {
-  // 重置MKV文件信息
-  appStore.setMkvFile(null);
-  // 返回文件选择步骤
-  appStore.setCurrentStep(1);
-};
-
-// 保存更改
-const saveChanges = () => {
-  // 触发父组件的保存事件
-  emit("save");
-};
+// 定义props
+const props = defineProps<{
+  isProcessing: boolean;
+}>();
 
 // 定义事件
 const emit = defineEmits<{
   (e: "save"): void;
+  (e: "back"): void;
 }>();
+
+// 返回文件选择
+const backToFileSelection = () => {
+  emit("back");
+};
+
+// 保存更改
+const saveChanges = () => {
+  emit("save");
+};
 </script>
 
 <style scoped>
