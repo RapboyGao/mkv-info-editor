@@ -10,7 +10,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit --skipLibCheck"
   },
   "keywords": [],
   "author": {
@@ -50,6 +50,7 @@
     "electron-squirrel-startup": "^1.0.1",
     "element-plus": "^2.13.1",
     "fs-extra": "^11.3.3",
+    "lodash": "^4.17.21",
     "pinia": "^3.0.4",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"

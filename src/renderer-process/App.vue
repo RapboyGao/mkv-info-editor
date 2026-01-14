@@ -5,38 +5,9 @@
     </header>
     
     <main class="app-main">
-      <!-- 步骤指示器 -->
-      <div class="steps-container">
-        <el-steps :active="appStore.currentStep" finish-status="success" align-center>
-          <el-step title="FFmpeg下载" description="下载FFmpeg工具" />
-          <el-step title="选择文件" description="选择要编辑的MKV文件" />
-          <el-step title="编辑章节" description="编辑章节信息" />
-        </el-steps>
-      </div>
-      
-      <!-- 步骤内容区域 -->
-      <div class="step-container">
-        <!-- 动态头部 -->
-        <div class="step-header">
-          <h2 class="step-title">
-            <span v-if="appStore.currentStep === 0">FFmpeg下载</span>
-            <span v-else-if="appStore.currentStep === 1">选择MKV文件</span>
-            <span v-else-if="appStore.currentStep === 2">章节编辑</span>
-            <el-badge 
-              v-if="appStore.currentStep === 2" 
-              :value="appStore.mkvFile?.chapters.length || 0" 
-              type="primary" 
-              class="chapter-count-badge" 
-            />
-          </h2>
-        </div>
-        
-        <!-- 动态步骤内容 -->
-        <div class="step-content-wrapper">
-          <FFmpegDownload v-if="appStore.currentStep === 0" />
-          <FileSelection v-else-if="appStore.currentStep === 1" />
-          <ChapterEditor v-else-if="appStore.currentStep === 2" />
-        </div>
+      <!-- 路由视图 -->
+      <div class="router-container">
+        <router-view />
       </div>
       
       <!-- 日志和进度显示 -->
@@ -49,14 +20,13 @@
 
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAppStore } from './stores/appStore';
 import { ElMessage } from 'element-plus';
-import FFmpegDownload from './components/FFmpegDownload.vue';
-import FileSelection from './components/FileSelection.vue';
-import ChapterEditor from './components/ChapterEditor.vue';
 import LogsDisplay from './components/LogsDisplay.vue';
 
 const appStore = useAppStore();
+const router = useRouter();
 
 // 处理FFmpeg日志
 const handleFFmpegLog = (event: Electron.IpcRendererEvent, logData: string) => {
@@ -76,16 +46,18 @@ const handleFFmpegDownloadProgress = (event: Electron.IpcRendererEvent, progress
 };
 
 // 处理FFmpeg下载完成
-const handleFFmpegDownloadComplete = () => {
+const handleFFmpegComplete = () => {
   appStore.updateDownloadProgress(0);
   appStore.hideDownloadProgress();
   appStore.setFFmpegDownloaded(true);
-  appStore.setCurrentStep(1);
   appStore.setProcessing(false);
   ElMessage({
     message: 'FFmpeg下载完成，已准备就绪！',
     type: 'success'
   });
+  
+  // 跳转到选择文件页面
+  router.push('/file-select');
 };
 
 // 处理FFmpeg下载错误
@@ -102,7 +74,7 @@ const handleFFmpegDownloadError = (event: Electron.IpcRendererEvent, errorMessag
 onMounted(() => {
   window.ipcRenderer.on('ffmpeg-log', handleFFmpegLog);
   window.ipcRenderer.on('ffmpeg-download-progress', handleFFmpegDownloadProgress);
-  window.ipcRenderer.on('ffmpeg-download-complete', handleFFmpegDownloadComplete);
+  window.ipcRenderer.on('ffmpeg-download-complete', handleFFmpegComplete);
   window.ipcRenderer.on('ffmpeg-download-error', handleFFmpegDownloadError);
 });
 
@@ -110,7 +82,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.ipcRenderer.off('ffmpeg-log', handleFFmpegLog);
   window.ipcRenderer.off('ffmpeg-download-progress', handleFFmpegDownloadProgress);
-  window.ipcRenderer.off('ffmpeg-download-complete', handleFFmpegDownloadComplete);
+  window.ipcRenderer.off('ffmpeg-download-complete', handleFFmpegComplete);
   window.ipcRenderer.off('ffmpeg-download-error', handleFFmpegDownloadError);
 });
 </script>
@@ -159,12 +131,7 @@ onBeforeUnmount(() => {
   overflow-x: hidden;
 }
 
-.steps-container {
-  margin-bottom: 24px;
-  padding: 0 8px;
-}
-
-.step-container {
+.router-container {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
@@ -174,37 +141,11 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-.step-header {
-  background-color: #fafafa;
-  padding: 16px 20px;
-  border-bottom: 1px solid #ebeef5;
-  box-sizing: border-box;
-}
-
-.step-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-  margin: 0;
-  display: flex;
-  align-items: center;
-}
-
-.step-content-wrapper {
-  padding: 20px;
-  box-sizing: border-box;
-  width: 100%;
-}
-
 .logs-container {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   width: 100%;
   box-sizing: border-box;
-}
-
-.chapter-count-badge {
-  margin-left: 10px;
 }
 </style>

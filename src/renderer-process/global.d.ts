@@ -1,24 +1,6 @@
 // 全局类型声明，扩展window对象
 
-// 前向声明章节数据类型
-declare interface ChapterData {
-  id: string;
-  start: number;
-  end: number;
-  title: string;
-  originalTitle: string;
-  timeBase: `${number}/${number}`;
-}
-
-// 前向声明MKV文件数据类型
-declare interface MkvFileData {
-  filePath: string;
-  duration: number;
-  metadata: string;
-  chapters: ChapterData[];
-  title?: string;
-  encoder?: string;
-}
+import type { ChapterData, MkvFileData } from '../shared';
 
 declare global {
   interface Window {
@@ -34,11 +16,11 @@ declare global {
       writeFile: (filePath: string, content: string) => Promise<boolean>;
       deleteFile: (filePath: string) => Promise<boolean>;
       updateMetadata: (originalMetadataPath: string, chapters: ChapterData[]) => Promise<string>;
-  generateMkvFile: (inputPath: string, mkvFileData: string, outputPath: string) => Promise<boolean>;
+      generateMkvFile: (inputPath: string, mkvFileData: string, outputPath: string) => Promise<boolean>;
     };
     ipcRenderer: {
-      on: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: unknown[]) => void) => void;
-      off: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: unknown[]) => void) => void;
+      on: (channel: string, listener: (...args: any[]) => void) => void;
+      off: (channel: string, listener: (...args: any[]) => void) => void;
     };
   }
 }

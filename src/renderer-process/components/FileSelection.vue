@@ -28,7 +28,7 @@
             <div class="file-actions">
               <el-button 
                 type="default" 
-                @click="appStore.setMkvFile(null)"
+                @click="reselectFile"
               >
                 <el-icon><Refresh /></el-icon>
                 重新选择
@@ -42,11 +42,13 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
 import { useAppStore } from '../stores/appStore';
 import { ElMessage } from 'element-plus';
-import { FolderOpened, DataAnalysis, Refresh } from '@element-plus/icons-vue';
+import { FolderOpened, Refresh } from '@element-plus/icons-vue';
 
 const appStore = useAppStore();
+const router = useRouter();
 
 // 获取文件名
 const getFileName = (path: string): string => {
@@ -74,8 +76,8 @@ const selectFile = async () => {
     // 更新MKV文件信息
     appStore.setMkvFile(mkvFileData);
     
-    // 进入下一步
-    appStore.setCurrentStep(2);
+    // 导航到章节编辑器页面
+    router.push('/chapter-editor');
     ElMessage({
       message: `成功解析 ${mkvFileData.chapters.length} 个章节！`,
       type: 'success'
@@ -90,6 +92,11 @@ const selectFile = async () => {
     appStore.setProcessing(false);
     appStore.resetFFmpegProgress();
   }
+};
+
+// 重新选择文件
+const reselectFile = () => {
+  appStore.setMkvFile(null);
 };
 </script>
 

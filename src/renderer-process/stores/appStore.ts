@@ -3,8 +3,6 @@ import { ChapterData, MkvFile, MkvFileData } from '@/shared'; // 使用index.ts�
 
 export const useAppStore = defineStore('app', {
   state: () => ({
-    // 步骤状态
-    currentStep: 0,
     ffmpegDownloaded: false,
     
     // 文件和章节信息
@@ -32,11 +30,6 @@ export const useAppStore = defineStore('app', {
   }),
   
   actions: {
-    // 更新当前步骤
-    setCurrentStep(step: number) {
-      this.currentStep = step;
-    },
-    
     // 设置FFmpeg下载状态
     setFFmpegDownloaded(downloaded: boolean) {
       this.ffmpegDownloaded = downloaded;

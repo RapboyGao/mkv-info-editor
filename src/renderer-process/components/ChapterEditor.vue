@@ -34,7 +34,8 @@
 
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
-import { computed } from "vue";
+import { computed, watch } from "vue";
+import { useRouter } from "vue-router";
 import { useAppStore } from "../stores/appStore";
 import ActionButtons from "./ActionButtons.vue";
 import ChapterHeader from "./ChapterHeader.vue";
@@ -44,10 +45,18 @@ import MkvMetadataPreview from "./MkvMetadataPreview.vue";
 
 // 获取appStore实例
 const appStore = useAppStore();
+const router = useRouter();
 
 // 本地状态，从appStore同步
 const localMkvFile = computed(() => appStore.mkvFile);
 const isProcessing = computed(() => appStore.isProcessing);
+
+// 监听mkvFile变化，如果无效则返回文件选择页面
+watch(() => localMkvFile.value.isValid, (isValid) => {
+  if (!isValid) {
+    router.push('/file-select');
+  }
+}, { immediate: true });
 
 // 获取文件名
 const getFileName = (path: string): string => {
@@ -157,7 +166,8 @@ const handleEncoderChange = (newEncoder: string) => {
 
 // 处理返回按钮点击
 const handleBack = () => {
-  appStore.setCurrentStep(1);
+  appStore.setMkvFile(null);
+  router.push('/file-select');
 };
 
 // 保存更改

@@ -21,6 +21,18 @@
           <el-icon><Download /></el-icon>
           {{ appStore.ffmpegDownloaded ? '重新下载FFmpeg' : '开始下载FFmpeg' }}
         </el-button>
+        
+        <!-- 只有FFmpeg已下载时才显示继续按钮 -->
+        <el-button 
+          type="success" 
+          @click="goToFileSelection" 
+          :disabled="!appStore.ffmpegDownloaded" 
+          size="large"
+          style="margin-left: 10px;"
+        >
+          <el-icon><Right /></el-icon>
+          继续到选择文件
+        </el-button>
       </div>
       
       <el-progress 
@@ -46,10 +58,12 @@
 <script setup lang="ts">
 import { useAppStore } from '../stores/appStore';
 import { ElMessage } from 'element-plus';
-import { CircleCheck, Download } from '@element-plus/icons-vue';
+import { CircleCheck, Download, Right } from '@element-plus/icons-vue';
 import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
 const appStore = useAppStore();
+const router = useRouter();
 
 // 下载FFmpeg
 const downloadFFmpeg = async () => {
@@ -73,6 +87,11 @@ const downloadFFmpeg = async () => {
     appStore.hideDownloadProgress();
     appStore.setProcessing(false);
   }
+};
+
+// 跳转到选择文件页面
+const goToFileSelection = () => {
+  router.push('/file-select');
 };
 
 // 组件挂载时自动下载FFmpeg

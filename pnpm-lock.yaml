@@ -32,6 +32,9 @@ importers:
       fs-extra:
         specifier: ^11.3.3
         version: 11.3.3
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@4.5.5)(vue@3.5.26(typescript@4.5.5))
