@@ -1,14 +1,15 @@
-import { MkvFile, MkvFileData } from '@/shared';
-import { ChildProcess } from 'child_process';
-import { BrowserWindow } from 'electron';
+import { MkvFile, MkvFileData } from "@/shared";
+import { ChildProcess } from "child_process";
+import { BrowserWindow } from "electron";
 
 // MKV任务状态类型
-export type MKVTaskStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type MKVTaskStatus = "pending" | "processing" | "completed" | "failed";
 
 /**
  * MKV任务接口，继承自MkvFile，并添加任务管理相关的属性和方法
  */
 export class MKVTask extends MkvFile {
+  // id: string; 从MKVFile中继承
   // 任务状态
   status: MKVTaskStatus;
   // 创建时间
@@ -31,7 +32,7 @@ export class MKVTask extends MkvFile {
    */
   constructor(mkvFileData: MkvFileData, mainWindow?: BrowserWindow) {
     super(mkvFileData);
-    this.status = 'pending';
+    this.status = "pending";
     this.createdAt = new Date();
     this.updatedAt = new Date();
     this.mainWindow = mainWindow;
@@ -43,7 +44,11 @@ export class MKVTask extends MkvFile {
    * @param outputPath 输出文件路径（可选）
    * @param error 错误信息（可选）
    */
-  updateStatus(status: MKVTaskStatus, outputPath?: string, error?: string): void {
+  updateStatus(
+    status: MKVTaskStatus,
+    outputPath?: string,
+    error?: string
+  ): void {
     this.status = status;
     this.updatedAt = new Date();
     if (outputPath) {
@@ -82,14 +87,14 @@ export class MKVTask extends MkvFile {
    * 检查任务是否已完成
    */
   get isCompleted(): boolean {
-    return this.status === 'completed' || this.status === 'failed';
+    return this.status === "completed" || this.status === "failed";
   }
 
   /**
    * 检查任务是否正在处理中
    */
   get isProcessing(): boolean {
-    return this.status === 'processing';
+    return this.status === "processing";
   }
 }
 
@@ -104,7 +109,10 @@ export var TASKS: MKVTask[] = [];
  * @param mainWindow 主窗口对象
  * @returns 添加的任务
  */
-export function addMkvTask(mkvFileData: MkvFileData, mainWindow?: BrowserWindow): MKVTask {
+export function addMkvTask(
+  mkvFileData: MkvFileData,
+  mainWindow?: BrowserWindow
+): MKVTask {
   const task = new MKVTask(mkvFileData, mainWindow);
   TASKS.push(task);
   return task;
@@ -116,7 +124,7 @@ export function addMkvTask(mkvFileData: MkvFileData, mainWindow?: BrowserWindow)
  * @returns 任务对象，如果不存在则返回undefined
  */
 export function getMkvTask(taskId: string): MKVTask | undefined {
-  return TASKS.find(task => task.id === taskId);
+  return TASKS.find((task) => task.id === taskId);
 }
 
 /**
@@ -126,7 +134,7 @@ export function getMkvTask(taskId: string): MKVTask | undefined {
  */
 export function deleteMkvTask(taskId: string): boolean {
   const initialLength = TASKS.length;
-  const index = TASKS.findIndex(task => task.id === taskId);
+  const index = TASKS.findIndex((task) => task.id === taskId);
   if (index !== -1) {
     TASKS.splice(index, 1);
   }
@@ -138,7 +146,7 @@ export function deleteMkvTask(taskId: string): boolean {
  */
 export function clearAllMkvTasks(): void {
   // 先终止所有正在处理的任务的子进程
-  TASKS.forEach(task => {
+  TASKS.forEach((task) => {
     if (task.isProcessing) {
       task.killChildProcess();
     }
@@ -153,7 +161,7 @@ export function clearAllMkvTasks(): void {
  * @returns 符合条件的任务列表
  */
 export function getMkvTasksByStatus(status: MKVTaskStatus): MKVTask[] {
-  return TASKS.filter(task => task.status === status);
+  return TASKS.filter((task) => task.status === status);
 }
 
 /**
@@ -162,7 +170,10 @@ export function getMkvTasksByStatus(status: MKVTaskStatus): MKVTask[] {
  * @param updates 更新内容
  * @returns 更新后的任务，如果不存在则返回undefined
  */
-export function updateMkvTask(taskId: string, updates: Partial<MKVTask>): MKVTask | undefined {
+export function updateMkvTask(
+  taskId: string,
+  updates: Partial<MKVTask>
+): MKVTask | undefined {
   const task = getMkvTask(taskId);
   if (task) {
     Object.assign(task, updates);
@@ -177,5 +188,5 @@ export function updateMkvTask(taskId: string, updates: Partial<MKVTask>): MKVTas
  * @param mainWindow 主窗口对象
  */
 export function notifyTasksChanged(mainWindow: BrowserWindow): void {
-  mainWindow.webContents.send('mkv-tasks-changed', TASKS);
+  mainWindow.webContents.send("mkv-tasks-changed", TASKS);
 }
