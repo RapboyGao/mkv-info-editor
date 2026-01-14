@@ -59,46 +59,6 @@ function executeFFCommand(
 }
 
 /**
- * 导入元数据到MKV文件
- * @param inputPath 原始MKV文件路径
- * @param metadataPath 元数据文件路径
- * @param outputPath 输出MKV文件路径
- * @param mainWindow 主窗口对象，用于日志输出
- * @returns 是否导入成功
- */
-async function handleImportMetadata(
-  inputPath: string,
-  metadataPath: string,
-  outputPath: string,
-  mainWindow: BrowserWindow
-): Promise<boolean> {
-  try {
-    await executeFFCommand(
-      [
-        "-i",
-        inputPath,
-        "-i",
-        metadataPath,
-        "-map",
-        "0",
-        "-map_metadata",
-        "1",
-        "-map_chapters",
-        "1",
-        "-c",
-        "copy",
-        outputPath,
-      ],
-      mainWindow
-    );
-    return true;
-  } catch (error) {
-    console.error("Failed to import metadata:", error);
-    throw error;
-  }
-}
-
-/**
  * 获取MKV文件的完整信息（时长、元数据、章节）
  * @param filePath MKV文件路径
  * @param mainWindow 主窗口对象，用于日志输出
@@ -345,19 +305,6 @@ async function handleGenerateMkvFile(
  * @param mainWindow 主窗口对象，用于日志输出和进程管理
  */
 export function registerMKVHandlers(mainWindow: BrowserWindow) {
-  // 导入元数据
-  ipcMain.handle(
-    "import-metadata",
-    async (_, inputPath: string, metadataPath: string, outputPath: string) => {
-      return handleImportMetadata(
-        inputPath,
-        metadataPath,
-        outputPath,
-        mainWindow
-      );
-    }
-  );
-
   // 获取MKV文件完整信息
   ipcMain.handle("get-mkv-file-info", async (_, filePath: string) => {
     return handleGetMkvFileInfo(filePath, mainWindow);
