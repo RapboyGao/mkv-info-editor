@@ -1,7 +1,7 @@
 import { BrowserWindow, app, ipcMain } from "electron";
 import { spawn } from "child_process";
 import path from "node:path";
-import { getFFmpegLocalPath } from "../../utils/ffmpegDownloader";
+import { getFFmpegLocalPath } from "../utils/ffmpegDownloader";
 import { MkvFileData, ChapterData, MkvFile } from "../../shared/types";
 import fs from "fs-extra";
 

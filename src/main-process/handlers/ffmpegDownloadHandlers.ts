@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain } from 'electron';
-import { downloadFFmpeg } from '../../utils/ffmpegDownloader';
+import { downloadFFmpeg } from '../utils/ffmpegDownloader';
 
 /**
  * 注册 FFmpeg 下载相关的 IPC 处理程序
