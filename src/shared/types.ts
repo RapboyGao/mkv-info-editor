@@ -6,7 +6,7 @@ export interface ChapterData {
   end: number;
   title: string;
   originalTitle: string;
-  timeBase?: `${number}/${number}`;
+  timeBase: `${number}/${number}`;
 }
 
 export type ChapterString =
@@ -18,7 +18,7 @@ export class Chapter implements ChapterData {
   end: number;
   title: string;
   originalTitle: string;
-  timeBase?: `${number}/${number}`;
+  timeBase: `${number}/${number}`;
 
   constructor(data: ChapterData) {
     this.id = data.id;
@@ -100,39 +100,51 @@ title=${this.title}` as ChapterString;
 
 // MKV文件元数据接口
 export interface MkvFileData {
+  id: string;
   filePath: string;
   duration: number;
   metadata: string;
-  title?: string;
-  encoder?: string;
-  format?: string;
-  bitRate?: number;
-  size?: number;
-  chapters?: ChapterData[];
+  title: string;
+  encoder: string;
+  format: string;
+  bitRate: number;
+  size: number;
+  chapters: ChapterData[];
 }
 
 // MKV文件类
 export class MkvFile implements MkvFileData {
+  id: string;
   filePath: string;
   duration: number;
   metadata: string;
-  title?: string;
-  encoder?: string;
-  format?: string;
-  bitRate?: number;
-  size?: number;
-  chapters?: ChapterData[];
+  title: string;
+  encoder: string;
+  format: string;
+  bitRate: number;
+  size: number;
+  chapters: ChapterData[];
 
   constructor(data: MkvFileData) {
+    this.id = data.id;
     this.filePath = data.filePath;
     this.duration = data.duration;
     this.metadata = data.metadata;
-    this.title = data.title;
-    this.encoder = data.encoder;
-    this.format = data.format;
-    this.bitRate = data.bitRate;
-    this.size = data.size;
-    this.chapters = data.chapters;
+    this.title = data.title || '';
+    this.encoder = data.encoder || '';
+    this.format = data.format || 'mkv';
+    this.bitRate = data.bitRate || 0;
+    this.size = data.size || 0;
+    this.chapters = data.chapters || [];
+  }
+
+  /**
+   * 判断是否真正获取了MKV文件信息
+   * @returns 是否有效
+   */
+  get isValid(): boolean {
+    // 通过检查id是否为虚假id和filePath是否有效来判断
+    return this.id !== 'fake-id' && this.filePath !== '';
   }
 
   /**
@@ -191,7 +203,6 @@ export class MkvFile implements MkvFileData {
    * @returns 是否成功更新
    */
   updateChapterTitle(chapterId: string, title: string): boolean {
-    if (!this.chapters) return false;
     const chapter = this.chapters.find(ch => ch.id === chapterId);
     if (!chapter) return false;
     chapter.title = title;
@@ -206,7 +217,6 @@ export class MkvFile implements MkvFileData {
    * @returns 是否成功更新
    */
   updateChapterTime(chapterId: string, start: number, end: number): boolean {
-    if (!this.chapters) return false;
     const chapter = this.chapters.find(ch => ch.id === chapterId);
     if (!chapter) return false;
     chapter.start = start;
@@ -227,9 +237,6 @@ export class MkvFile implements MkvFileData {
    * @param chapter 章节数据
    */
   addChapter(chapter: ChapterData): void {
-    if (!this.chapters) {
-      this.chapters = [];
-    }
     this.chapters.push(chapter);
     // 按开始时间排序
     this.chapters.sort((a, b) => a.start - b.start);
@@ -243,7 +250,6 @@ export class MkvFile implements MkvFileData {
    * @returns 是否成功删除
    */
   deleteChapter(chapterId: string): boolean {
-    if (!this.chapters) return false;
     const initialLength = this.chapters.length;
     this.chapters = this.chapters.filter(ch => ch.id !== chapterId);
     const deleted = this.chapters.length < initialLength;
@@ -258,7 +264,7 @@ export class MkvFile implements MkvFileData {
    * 更新章节结束时间
    */
   updateChapterEndTimes(): void {
-    if (!this.chapters || this.chapters.length === 0) return;
+    if (this.chapters.length === 0) return;
     
     // 按开始时间排序
     this.chapters.sort((a, b) => a.start - b.start);
@@ -270,10 +276,8 @@ export class MkvFile implements MkvFileData {
     
     // 最后一个章节的结束时间为总时长（转换为当前时间基）
     const lastChapter = this.chapters[this.chapters.length - 1];
-    if (lastChapter) {
-      const denominator = lastChapter.timeBase ? parseInt(lastChapter.timeBase.split('/')[1]) : 1000;
-      lastChapter.end = this.duration * denominator;
-    }
+    const denominator = lastChapter.timeBase ? parseInt(lastChapter.timeBase.split('/')[1]) : 1000;
+    lastChapter.end = this.duration * denominator;
   }
 
   /**
@@ -281,7 +285,7 @@ export class MkvFile implements MkvFileData {
    * @returns 章节metadata字符串
    */
   getChaptersMetadata(): string {
-    if (!this.chapters || this.chapters.length === 0) return '';
+    if (this.chapters.length === 0) return '';
     
     return this.chapters
       .map(chapter => new Chapter(chapter).toMetadataString())
@@ -297,18 +301,14 @@ export class MkvFile implements MkvFileData {
     let metadata = ';FFMETADATA1\n';
     
     // 添加文件级元数据
-    if (this.title) {
-      metadata += `title=${this.title}\n`;
-    }
-    if (this.encoder) {
-      metadata += `encoder=${this.encoder}\n`;
-    }
+    metadata += `title=${this.title}\n`;
+    metadata += `encoder=${this.encoder}\n`;
     
     // 添加空行分隔文件元数据和章节
     metadata += '\n';
     
     // 添加所有章节信息
-    if (this.chapters && this.chapters.length > 0) {
+    if (this.chapters.length > 0) {
       for (const chapter of this.chapters) {
         metadata += '[CHAPTER]\n';
         metadata += `TIMEBASE=${chapter.timeBase || '1/1000'}\n`;

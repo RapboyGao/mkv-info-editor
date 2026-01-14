@@ -2,7 +2,7 @@
   <div class="step-content">
     <div class="file-selection">
       <el-empty 
-        v-if="!appStore.mkvFile" 
+        v-if="!appStore.mkvFile.isValid" 
         description="请选择要编辑的MKV文件"
         :image-size="120"
       >

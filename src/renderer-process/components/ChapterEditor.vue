@@ -4,128 +4,36 @@
       <!-- 文件信息组件 -->
       <MkvFileInfo />
 
-      <div
-        class="editor-header"
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        "
-      >
-        <h3>章节列表</h3>
-        <div style="display: flex; gap: 10px">
-          <el-button type="primary" @click="addChapter">
-            <el-icon><Plus /></el-icon>
-            添加章节
-          </el-button>
-        </div>
-      </div>
+      <!-- 章节表头组件 -->
+      <ChapterHeader @add="addChapter" />
 
-      <el-table
-        :data="appStore.mkvFile?.chapters || []"
-        style="width: 100%"
-        border
-        :row-key="'id'"
-        fit
-      >
-        <el-table-column label="序号" width="60" align="center" type="index" />
-        <el-table-column label="开始时间" width="250" align="center">
-          <template #default="scope">
-            <ChapterStartTimeEditor
-              :chapter="scope.row"
-              :chapter-index="scope.$index"
-              @save="resortChapters"
-              @cancel="handleTimeCancel"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column label="结束时间" width="180" align="center">
-          <template #default="scope">
-            {{ chapterInstances[scope.$index].endTime }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="title"
-          label="修改后标题"
-          min-width="200"
-          show-overflow-tooltip
-          flex-grow="1"
-        >
-          <template #default="scope">
-            <el-input
-              v-model="scope.row.title"
-              placeholder="请输入章节标题"
-              style="width: 100%"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="originalTitle"
-          label="原始标题"
-          min-width="200"
-          show-overflow-tooltip
-        >
-          <template #default="scope">
-            <div class="original-title">{{ scope.row.originalTitle }}</div>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right" align="center">
-          <template #default="scope">
-            <el-button
-              type="danger"
-              size="small"
-              @click="deleteChapter(scope.$index)"
-              :disabled="(appStore.mkvFile?.chapters || []).length <= 1"
-            >
-              <el-icon><Delete /></el-icon>
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <!-- 章节表格组件 -->
+      <ChapterTable 
+        :chapters="appStore.mkvFile.chapters"
+        @chapter-updated="resortChapters"
+        @chapter-deleted="handleChapterDeleted"
+      />
+      
+      <!-- Metadata预览组件 -->
+      <MkvMetadataPreview />
 
-      <div class="action-buttons" style="margin-top: 20px; text-align: center">
-        <el-button type="default" @click="backToFileSelection">
-          <el-icon><Back /></el-icon>
-          返回文件选择
-        </el-button>
-        <el-button
-          type="success"
-          @click="saveChanges"
-          :loading="appStore.isProcessing"
-          size="large"
-        >
-          <el-icon><Check /></el-icon>
-          保存更改
-        </el-button>
-      </div>
+      <!-- 操作按钮组件 -->
+      <ActionButtons @save="saveChanges" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
 import { useAppStore } from "../stores/appStore";
 import { ElMessage } from "element-plus";
-import { Plus, Delete, Back, Check } from "@element-plus/icons-vue";
-import ChapterStartTimeEditor from "./ChapterStartTimeEditor.vue";
+import { Delete } from "@element-plus/icons-vue";
 import MkvFileInfo from "./MkvFileInfo.vue";
-import { Chapter, ChapterData } from "../../shared/types";
+import MkvMetadataPreview from "./MkvMetadataPreview.vue";
+import ActionButtons from "./ActionButtons.vue";
+import ChapterHeader from "./ChapterHeader.vue";
+import ChapterTable from "./ChapterTable.vue";
 
 const appStore = useAppStore();
-
-// 创建Chapter实例数组，用于访问计算属性
-const chapterInstances = computed(() => {
-  return (appStore.mkvFile?.chapters || []).map(
-    (chapter) => new Chapter(chapter)
-  );
-});
-
-// 返回文件选择
-const backToFileSelection = () => {
-  appStore.setCurrentStep(1);
-};
 
 // 获取文件名
 const getFileName = (path: string): string => {
@@ -134,20 +42,22 @@ const getFileName = (path: string): string => {
 
 // 保存时间编辑
 const resortChapters = () => {
-  if (appStore.mkvFile?.chapters) {
-    // 使用appStore中的方法来更新章节列表
-    const sortedChapters = [...appStore.mkvFile.chapters].sort(
-      (a, b) => a.start - b.start
-    );
-    appStore.setChapters(sortedChapters);
-    // 更新章节结束时间
-    appStore.updateChapterEndTimes();
-  }
+  // 使用appStore中的方法来更新章节列表
+  const sortedChapters = [...appStore.mkvFile.chapters].sort(
+    (a, b) => a.start - b.start
+  );
+  appStore.setChapters(sortedChapters);
+  // 更新章节结束时间
+  appStore.updateChapterEndTimes();
 };
 
-// 取消时间编辑
-const handleTimeCancel = () => {
-  // 时间编辑组件已经在内部处理了取消
+// 处理章节删除
+const handleChapterDeleted = (index: number) => {
+  // 获取要删除的章节ID
+  const chapterId = appStore.mkvFile.chapters[index].id;
+
+  // 删除章节
+  appStore.deleteChapter(chapterId);
 };
 
 // 添加章节
@@ -185,26 +95,9 @@ const addChapter = () => {
   }
 };
 
-// 删除章节
-const deleteChapter = (index: number) => {
-  if (!appStore.mkvFile?.chapters || appStore.mkvFile.chapters.length <= 1) {
-    ElMessage({
-      message: "至少需要保留一个章节",
-      type: "warning",
-    });
-    return;
-  }
-
-  // 获取要删除的章节ID
-  const chapterId = appStore.mkvFile.chapters[index].id;
-
-  // 删除章节
-  appStore.deleteChapter(chapterId);
-};
-
 // 保存更改
 const saveChanges = async () => {
-  if (!appStore.mkvFile?.filePath || !appStore.mkvFile?.metadata) {
+  if (!appStore.mkvFile.isValid) {
     ElMessage({
       message: "请先选择MKV文件",
       type: "error",
@@ -219,14 +112,13 @@ const saveChanges = async () => {
     // 确保类型匹配
     const newMetadataPath = await window.electronAPI.updateMetadata(
       appStore.mkvFile.metadata,
-      appStore.mkvFile?.chapters || []
+      appStore.mkvFile.chapters
     );
 
     // 选择输出文件路径
     appStore.setProcessingMessage("正在选择输出文件...");
-    const outputFileName = getFileName(
-      appStore.mkvFile?.filePath || ""
-    ).replace(".mkv", "_edited.mkv");
+    const outputFileName = getFileName(appStore.mkvFile.filePath)
+      .replace(".mkv", "_edited.mkv");
     const outputFilePath = await window.electronAPI.saveMkvFile(outputFileName);
 
     if (!outputFilePath) {
@@ -240,7 +132,7 @@ const saveChanges = async () => {
     appStore.setProcessingMessage("正在导入元数据到MKV文件...");
     appStore.updateFFmpegProgress(0);
     await window.electronAPI.importMetadata(
-      appStore.mkvFile?.filePath || "",
+      appStore.mkvFile.filePath,
       newMetadataPath,
       outputFilePath
     );

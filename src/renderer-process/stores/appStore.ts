@@ -8,7 +8,18 @@ export const useAppStore = defineStore('app', {
     ffmpegDownloaded: false,
     
     // 文件和章节信息
-    mkvFile: null as MkvFile | null,
+    mkvFile: new MkvFile({
+      id: 'fake-id',
+      filePath: '',
+      duration: 0,
+      metadata: '',
+      title: '',
+      encoder: '',
+      format: 'mkv',
+      bitRate: 0,
+      size: 0,
+      chapters: []
+    }),
     
     // 状态管理
     isProcessing: false,
@@ -33,70 +44,61 @@ export const useAppStore = defineStore('app', {
     
     // 设置MKV文件信息
     setMkvFile(fileData: MkvFileData | null) {
-      this.mkvFile = fileData ? new MkvFile(fileData) : null;
+      this.mkvFile = fileData ? new MkvFile(fileData) : new MkvFile({
+        id: 'fake-id',
+        filePath: '',
+        duration: 0,
+        metadata: '',
+        title: '',
+        encoder: '',
+        format: 'mkv',
+        bitRate: 0,
+        size: 0,
+        chapters: []
+      });
     },
     
     // 设置章节列表
     setChapters(chapters: ChapterData[]) {
-      if (this.mkvFile) {
-        this.mkvFile.setChapters(chapters);
-      }
+      this.mkvFile.setChapters(chapters);
     },
     
     // 设置总时长
     setTotalDuration(duration: number) {
-      if (this.mkvFile) {
-        this.mkvFile.setDuration(duration);
-      }
+      this.mkvFile.setDuration(duration);
     },
     
     // 添加章节
     addChapter(chapter: ChapterData) {
-      if (this.mkvFile) {
-        this.mkvFile.addChapter(chapter);
-      }
+      this.mkvFile.addChapter(chapter);
     },
     
     // 删除章节
     deleteChapter(chapterId: string) {
-      if (this.mkvFile) {
-        return this.mkvFile.deleteChapter(chapterId);
-      }
-      return false;
+      return this.mkvFile.deleteChapter(chapterId);
     },
     
     // 更新章节标题
     updateChapterTitle(chapterId: string, title: string) {
-      if (this.mkvFile) {
-        return this.mkvFile.updateChapterTitle(chapterId, title);
-      }
-      return false;
+      return this.mkvFile.updateChapterTitle(chapterId, title);
     },
     
     // 更新章节时间
     updateChapterTime(chapterId: string, start: number, end: number) {
-      if (this.mkvFile) {
-        const result = this.mkvFile.updateChapterTime(chapterId, start, end);
-        // 更新章节结束时间
-        this.mkvFile.updateChapterEndTimes();
-        return result;
-      }
-      return false;
+      const result = this.mkvFile.updateChapterTime(chapterId, start, end);
+      // 更新章节结束时间
+      this.mkvFile.updateChapterEndTimes();
+      return result;
     },
     
     // 更新章节结束时间
     updateChapterEndTimes() {
-      if (this.mkvFile) {
-        this.mkvFile.updateChapterEndTimes();
-      }
+      this.mkvFile.updateChapterEndTimes();
     },
     
     // 获取所有章节的metadata字符串
     getChaptersMetadata() {
-      if (this.mkvFile) {
-        return this.mkvFile.getChaptersMetadata();
-      }
-      return '';
+      return this.mkvFile.getChaptersMetadata();
     },
     
     // 更新处理状态

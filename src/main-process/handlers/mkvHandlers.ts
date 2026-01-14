@@ -324,6 +324,7 @@ async function handleGetMkvFileInfo(filePath: string, mainWindow: BrowserWindow)
     
     // 返回完整的MKV文件信息
     return {
+      id: `mkv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       filePath,
       duration: totalDuration,
       metadata: metadataContent,
