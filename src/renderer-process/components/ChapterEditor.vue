@@ -1,6 +1,9 @@
 <template>
   <div class="step-content">
     <div class="chapter-editor">
+      <!-- 文件信息组件 -->
+      <MkvFileInfo />
+      
       <div
         class="editor-header"
         style="
@@ -107,6 +110,7 @@ import { useAppStore } from "../stores/appStore";
 import { ElMessage } from "element-plus";
 import { Plus, Delete, Back, Check } from "@element-plus/icons-vue";
 import ChapterStartTimeEditor from "./ChapterStartTimeEditor.vue";
+import MkvFileInfo from "./MkvFileInfo.vue";
 import { Chapter } from "../../shared/types";
 
 const appStore = useAppStore();

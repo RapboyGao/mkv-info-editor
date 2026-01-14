@@ -180,26 +180,65 @@ async function handleImportMetadata(
  */
 async function handleGetMkvFileInfo(filePath: string, mainWindow: BrowserWindow): Promise<MkvFileData> {
   try {
-    // 1. 获取MKV文件总时长
-    const totalDuration = await handleGetMkvDuration(filePath, mainWindow);
+    // 1. 获取文件大小
+    const fileStats = await fs.stat(filePath);
+    const fileSize = fileStats.size;
     
-    // 2. 导出元数据
-    const metadataPath = await handleExportMetadata(filePath, mainWindow);
+    // 2. 导出元数据并获取详细信息，一次性获取所有需要的数据
+    const tempDir = app.getPath('temp');
+    const metadataPath = path.join(tempDir, `metadata_${Date.now()}.txt`);
+    
+    // 使用用户建议的命令：一次性获取所有信息
+    const command = [
+      '-i', filePath,
+      '-f', 'ffmetadata', metadataPath,
+      '-v', 'info'
+    ];
+    
+    const output = await executeFFCommand(command, mainWindow);
     
     // 3. 读取并解析元数据内容
-    const content = await fs.readFile(metadataPath, "utf-8");
+    const metadataContent = await fs.readFile(metadataPath, "utf-8");
     
-    // 4. 解析元数据，提取章节信息
-    const chaptersList: ChapterData[] = [];
-    let currentChapter: Partial<ChapterData> = {};
-    let timebase = "1/1000"; // 默认时间基准为毫秒
+    // 4. 解析输出信息
+    let totalDuration = 100 * 3600; // 默认值
+    let format = "MKV";
+    let bitRate = 0;
     let title = "";
     let encoder = "";
     
-    for (const line of content.split('\n')) {
+    // 解析时长
+    const durationMatch = output.match(/Duration:\s*(\d+):(\d+):(\d+)(?:\.(\d+))?/i);
+    if (durationMatch) {
+      const [, hours, minutes, seconds, milliseconds = '0'] = durationMatch;
+      totalDuration = 
+        parseFloat(hours) * 3600 + 
+        parseFloat(minutes) * 60 + 
+        parseFloat(seconds) + 
+        parseFloat(milliseconds) / Math.pow(10, milliseconds.length);
+    }
+    
+    // 解析格式
+    const formatMatch = output.match(/Input #0,\s*([a-zA-Z0-9_]+),/i);
+    if (formatMatch) {
+      format = formatMatch[1].toUpperCase();
+    }
+    
+    // 解析比特率
+    const bitRateMatch = output.match(/bitrate:\s*(\d+)\s*kb\/s/i);
+    if (bitRateMatch) {
+      bitRate = parseInt(bitRateMatch[1]) * 1000; // 转换为bps
+    }
+    
+    // 5. 解析元数据，提取章节信息和全局元数据
+    const chaptersList: ChapterData[] = [];
+    let currentChapter: Partial<ChapterData> = {};
+    let timebase = "1/1000"; // 默认时间基准为毫秒
+    
+    for (const line of metadataContent.split('\n')) {
       const trimmedLine = line.trim();
       
-      // 解析全局元数据
+      // 解析全局元数据（在元数据文件中）
       if (trimmedLine.startsWith("title=")) {
         title = trimmedLine.split("=")[1];
       } else if (trimmedLine.startsWith("encoder=")) {
@@ -279,10 +318,13 @@ async function handleGetMkvFileInfo(filePath: string, mainWindow: BrowserWindow)
     return {
       filePath,
       duration: totalDuration,
-      metadata: content,
+      metadata: metadataContent,
       chapters: chaptersList,
       title,
       encoder,
+      format,
+      bitRate,
+      size: fileSize
     };
   } catch (error) {
     console.error('Failed to get MKV file info:', error);
