@@ -3,7 +3,7 @@
     <div class="chapter-editor">
       <!-- 文件信息组件 -->
       <MkvFileInfo />
-      
+
       <div
         class="editor-header"
         style="
@@ -73,11 +73,11 @@
         <el-table-column label="操作" width="120" fixed="right" align="center">
           <template #default="scope">
             <el-button
-                type="danger"
-                size="small"
-                @click="deleteChapter(scope.$index)"
-                :disabled="(appStore.mkvFile?.chapters || []).length <= 1"
-              >
+              type="danger"
+              size="small"
+              @click="deleteChapter(scope.$index)"
+              :disabled="(appStore.mkvFile?.chapters || []).length <= 1"
+            >
               <el-icon><Delete /></el-icon>
               删除
             </el-button>
@@ -111,13 +111,15 @@ import { ElMessage } from "element-plus";
 import { Plus, Delete, Back, Check } from "@element-plus/icons-vue";
 import ChapterStartTimeEditor from "./ChapterStartTimeEditor.vue";
 import MkvFileInfo from "./MkvFileInfo.vue";
-import { Chapter } from "../../shared/types";
+import { Chapter, ChapterData } from "../../shared/types";
 
 const appStore = useAppStore();
 
 // 创建Chapter实例数组，用于访问计算属性
 const chapterInstances = computed(() => {
-  return (appStore.mkvFile?.chapters || []).map(chapter => new Chapter(chapter));
+  return (appStore.mkvFile?.chapters || []).map(
+    (chapter) => new Chapter(chapter)
+  );
 });
 
 // 返回文件选择
@@ -134,7 +136,9 @@ const getFileName = (path: string): string => {
 const resortChapters = () => {
   if (appStore.mkvFile?.chapters) {
     // 使用appStore中的方法来更新章节列表
-    const sortedChapters = [...appStore.mkvFile.chapters].sort((a, b) => a.start - b.start);
+    const sortedChapters = [...appStore.mkvFile.chapters].sort(
+      (a, b) => a.start - b.start
+    );
     appStore.setChapters(sortedChapters);
     // 更新章节结束时间
     appStore.updateChapterEndTimes();
@@ -150,9 +154,9 @@ const handleTimeCancel = () => {
 const addChapter = () => {
   // 生成随机ID
   const generateId = () => Math.random().toString(36).substring(2, 10);
-  
+
   // 获取默认时间基
-  const timeBase = '1/1000';
+  const timeBase = "1/1000";
 
   if (!appStore.mkvFile?.chapters || appStore.mkvFile.chapters.length === 0) {
     // 如果没有章节，添加第一个章节
@@ -162,7 +166,7 @@ const addChapter = () => {
       end: 0, // 结束时间会在addChapter方法中自动计算
       title: "新章节",
       originalTitle: "新章节",
-      timeBase: timeBase
+      timeBase: timeBase,
     });
   } else {
     // 获取最后一个章节
@@ -176,7 +180,7 @@ const addChapter = () => {
       end: 0, // 结束时间会在addChapter方法中自动计算
       title: "新章节",
       originalTitle: "新章节",
-      timeBase: lastChapter.timeBase || timeBase
+      timeBase: lastChapter.timeBase || timeBase,
     });
   }
 };
@@ -193,7 +197,7 @@ const deleteChapter = (index: number) => {
 
   // 获取要删除的章节ID
   const chapterId = appStore.mkvFile.chapters[index].id;
-  
+
   // 删除章节
   appStore.deleteChapter(chapterId);
 };
@@ -212,25 +216,17 @@ const saveChanges = async () => {
     appStore.setProcessing(true, "正在生成新的元数据文件...");
     appStore.resetFFmpegProgress();
 
-    // 更新元数据文件 - 将响应式对象转换为普通对象，避免IPC序列化错误
-    const plainChapters = (appStore.mkvFile?.chapters || []).map((chapter) => ({
-      id: chapter.id,
-      start: chapter.start,
-      end: chapter.end,
-      title: chapter.title,
-      originalTitle: chapter.originalTitle
-    }));
+    // 确保类型匹配
     const newMetadataPath = await window.electronAPI.updateMetadata(
       appStore.mkvFile.metadata,
-      plainChapters
+      appStore.mkvFile?.chapters || []
     );
 
     // 选择输出文件路径
     appStore.setProcessingMessage("正在选择输出文件...");
-    const outputFileName = getFileName(appStore.mkvFile?.filePath || "").replace(
-      ".mkv",
-      "_edited.mkv"
-    );
+    const outputFileName = getFileName(
+      appStore.mkvFile?.filePath || ""
+    ).replace(".mkv", "_edited.mkv");
     const outputFilePath = await window.electronAPI.saveMkvFile(outputFileName);
 
     if (!outputFilePath) {

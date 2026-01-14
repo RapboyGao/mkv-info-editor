@@ -287,4 +287,37 @@ export class MkvFile implements MkvFileData {
       .map(chapter => new Chapter(chapter).toMetadataString())
       .join('\n\n');
   }
+  
+  /**
+   * 获取完整的metadata字符串，包含文件级元数据和所有章节信息
+   * 格式与ffmpeg生成的metadata保持一致
+   * @returns 完整的metadata字符串
+   */
+  get fullMetadata(): string {
+    let metadata = ';FFMETADATA1\n';
+    
+    // 添加文件级元数据
+    if (this.title) {
+      metadata += `title=${this.title}\n`;
+    }
+    if (this.encoder) {
+      metadata += `encoder=${this.encoder}\n`;
+    }
+    
+    // 添加空行分隔文件元数据和章节
+    metadata += '\n';
+    
+    // 添加所有章节信息
+    if (this.chapters && this.chapters.length > 0) {
+      for (const chapter of this.chapters) {
+        metadata += '[CHAPTER]\n';
+        metadata += `TIMEBASE=${chapter.timeBase || '1/1000'}\n`;
+        metadata += `START=${chapter.start}\n`;
+        metadata += `END=${chapter.end}\n`;
+        metadata += `title=${chapter.title}\n`;
+      }
+    }
+    
+    return metadata;
+  }
 }
