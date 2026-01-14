@@ -5,12 +5,12 @@ import path from "path";
 import sevenZip from "7zip-min";
 
 // 根据平台获取对应的ffmpeg可执行文件名
-const getFFmpegExecutableName = (): string => {
+function getFFmpegExecutableName(): string {
   return process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg";
-};
+}
 
 // 获取FFmpeg下载URL
-const getFFmpegDownloadUrl = (): string => {
+function getFFmpegDownloadUrl(): string {
   // 根据平台返回不同的7z下载URL
   if (process.platform === "win32") {
     // Windows平台
@@ -23,31 +23,31 @@ const getFFmpegDownloadUrl = (): string => {
     const executableName = getFFmpegExecutableName();
     return `https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/linux-x64/${executableName}`;
   }
-};
+}
 
 // 获取FFmpeg本地存储路径
-const getFFmpegLocalPath = (): string => {
+function getFFmpegLocalPath(): string {
   const appDataPath = app.getPath("userData");
   const executableName = getFFmpegExecutableName();
   return path.join(appDataPath, executableName);
-};
+}
 
 // 获取项目根目录下的ffmpeg目录路径
-const getProjectFFmpegPath = (): string => {
+function getProjectFFmpegPath(): string {
   const projectRoot = path.join(__dirname, "../../../");
   const ffmpegDir = path.join(projectRoot, "ffmpeg");
   const executableName = getFFmpegExecutableName();
   return path.join(ffmpegDir, executableName);
-};
+}
 
 // 检查FFmpeg是否已下载
-const isFFmpegDownloaded = async (): Promise<boolean> => {
+async function isFFmpegDownloaded(): Promise<boolean> {
   const ffmpegPath = getFFmpegLocalPath();
   return await fs.pathExists(ffmpegPath);
-};
+}
 
 // 复制FFmpeg到项目根目录的ffmpeg文件夹
-const copyFFmpegToProjectDir = async (sourcePath: string): Promise<string> => {
+async function copyFFmpegToProjectDir(sourcePath: string): Promise<string> {
   const projectFFmpegPath = getProjectFFmpegPath();
   const ffmpegDir = path.dirname(projectFFmpegPath);
 
@@ -63,14 +63,16 @@ const copyFFmpegToProjectDir = async (sourcePath: string): Promise<string> => {
   }
 
   return projectFFmpegPath;
-};
+}
 
 // 查找解压后的FFmpeg可执行文件
-const findFFmpegExecutable = async (extractDir: string): Promise<string> => {
+async function findFFmpegExecutable(
+  extractDir: string
+): Promise<string> {
   const executableName = getFFmpegExecutableName();
 
   // 递归查找可执行文件
-  const findExecutable = async (dir: string): Promise<string | null> => {
+  async function findExecutable(dir: string): Promise<string | null> {
     const files = await fs.readdir(dir);
 
     for (const file of files) {
@@ -90,7 +92,7 @@ const findFFmpegExecutable = async (extractDir: string): Promise<string> => {
     }
 
     return null;
-  };
+  }
 
   const executablePath = await findExecutable(extractDir);
   if (!executablePath) {
@@ -100,10 +102,10 @@ const findFFmpegExecutable = async (extractDir: string): Promise<string> => {
   }
 
   return executablePath;
-};
+}
 
 // 配置7zip-min使用正确的7za路径
-const configure7Zip = async () => {
+async function configure7Zip() {
   // 获取当前工作目录
   const cwd = process.cwd();
 
@@ -142,18 +144,18 @@ const configure7Zip = async () => {
 
   // 配置7zip-min使用正确的路径
   sevenZip.config({ binaryPath: correctPath });
-};
+}
 
 // 解压7z文件
-const extract7zFile = async (
+async function extract7zFile(
   archivePath: string,
   extractDir: string
-): Promise<void> => {
+): Promise<void> {
   try {
     console.log(`Starting 7z extraction: ${archivePath} -> ${extractDir}`);
 
     // 确保7zip-min已配置
-  await configure7Zip();
+    await configure7Zip();
 
     // 使用7zip-min解压
     await sevenZip.unpack(archivePath, extractDir);
@@ -163,12 +165,12 @@ const extract7zFile = async (
     console.error("7z extraction error:", error);
     throw error;
   }
-};
+}
 
 // 下载FFmpeg
-const downloadFFmpeg = async (
+async function downloadFFmpeg(
   window: Electron.BrowserWindow
-): Promise<string> => {
+): Promise<string> {
   try {
     // 检查FFmpeg是否已下载
     const alreadyDownloaded = await isFFmpegDownloaded();
@@ -242,7 +244,7 @@ const downloadFFmpeg = async (
     window.webContents.send("ffmpeg-download-error", (error as Error).message);
     throw error;
   }
-};
+}
 
 export {
   getFFmpegLocalPath,

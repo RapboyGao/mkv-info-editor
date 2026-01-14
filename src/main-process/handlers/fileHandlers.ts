@@ -5,7 +5,7 @@ import fs from 'fs-extra';
  * 注册文件操作相关的 IPC 处理程序
  * @param mainWindow 主窗口对象，用于文件对话框
  */
-export const registerFileHandlers = (mainWindow: BrowserWindow) => {
+export function registerFileHandlers(mainWindow: BrowserWindow) {
   // 选择MKV文件
   ipcMain.handle('select-mkv-file', async () => {
     if (!mainWindow) return null;
@@ -76,4 +76,4 @@ export const registerFileHandlers = (mainWindow: BrowserWindow) => {
       throw error;
     }
   });
-};
+}

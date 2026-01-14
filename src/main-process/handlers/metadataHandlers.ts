@@ -5,7 +5,7 @@ import { Chapter } from '../../shared/types';
 /**
  * 注册元数据处理相关的 IPC 处理程序
  */
-export const registerMetadataHandlers = () => {
+export function registerMetadataHandlers() {
   // 解析元数据文件
   ipcMain.handle(
     'parse-metadata',
@@ -216,4 +216,4 @@ export const registerMetadataHandlers = () => {
       }
     }
   );
-};
+}

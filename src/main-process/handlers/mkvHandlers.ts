@@ -4,7 +4,7 @@ import path from 'node:path';
 import { getFFmpegLocalPath } from '../../utils/ffmpegDownloader';
 
 // 执行FFmpeg命令，带日志输出
-const executeFFCommand = (args: string[], mainWindow: BrowserWindow | null): Promise<string> => {
+function executeFFCommand(args: string[], mainWindow: BrowserWindow | null): Promise<string> {
   return new Promise((resolve, reject) => {
     const ffmpegPath = getFFmpegLocalPath();
     const process = spawn(ffmpegPath, args);
@@ -51,7 +51,7 @@ const executeFFCommand = (args: string[], mainWindow: BrowserWindow | null): Pro
       reject(err);
     });
   });
-};
+}
 
 /**
  * 获取MKV文件时长
@@ -174,7 +174,7 @@ async function handleImportMetadata(
  * 注册 MKV 处理相关的 IPC 处理程序
  * @param mainWindow 主窗口对象，用于日志输出和进程管理
  */
-export const registerMKVHandlers = (mainWindow: BrowserWindow) => {
+export function registerMKVHandlers(mainWindow: BrowserWindow) {
   // 获取MKV文件时长
   ipcMain.handle('get-mkv-duration', async (_, filePath: string) => {
     return handleGetMkvDuration(filePath, mainWindow);
@@ -192,4 +192,4 @@ export const registerMKVHandlers = (mainWindow: BrowserWindow) => {
       return handleImportMetadata(inputPath, metadataPath, outputPath, mainWindow);
     }
   );
-};
+}

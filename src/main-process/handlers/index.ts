@@ -8,7 +8,7 @@ import { registerMetadataHandlers } from './metadataHandlers';
  * 注册所有 IPC 处理程序
  * @param mainWindow 主窗口对象，用于文件对话框、进度通知等
  */
-export const registerAllIpcHandlers = (mainWindow: BrowserWindow) => {
+export function registerAllIpcHandlers(mainWindow: BrowserWindow) {
   // 注册文件操作相关的 IPC 处理程序
   registerFileHandlers(mainWindow);
   
@@ -20,4 +20,4 @@ export const registerAllIpcHandlers = (mainWindow: BrowserWindow) => {
   
   // 注册元数据处理相关的 IPC 处理程序
   registerMetadataHandlers();
-};
+}

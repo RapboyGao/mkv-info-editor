@@ -10,7 +10,7 @@ if (started) {
 
 let mainWindow: BrowserWindow | null = null;
 
-const createWindow = () => {
+function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 800,
@@ -34,7 +34,7 @@ const createWindow = () => {
 
   // 注册所有 IPC 处理程序
   registerAllIpcHandlers(mainWindow);
-};
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
