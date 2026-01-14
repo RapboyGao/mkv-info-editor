@@ -16,6 +16,7 @@ export interface IpcApi {
   importMetadata: (inputPath: string, metadataPath: string, outputPath: string) => Promise<boolean>;
   getMkvDuration: (filePath: string) => Promise<number>;
   getMkvFileInfo: (filePath: string) => Promise<MkvFileData>;
+  generateMkvFile: (inputPath: string, mkvFileData: string, outputPath: string) => Promise<boolean>;
   
   // 文件内容操作
   readFile: (filePath: string) => Promise<string>;
@@ -39,6 +40,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('import-metadata', inputPath, metadataPath, outputPath),
   getMkvDuration: (filePath: string) => ipcRenderer.invoke('get-mkv-duration', filePath),
   getMkvFileInfo: (filePath: string) => ipcRenderer.invoke('get-mkv-file-info', filePath),
+  generateMkvFile: (inputPath: string, mkvFileData: MkvFileData, outputPath: string) => 
+    ipcRenderer.invoke('generate-mkv-file', inputPath, mkvFileData, outputPath),
   
   // 文件内容操作
   readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),

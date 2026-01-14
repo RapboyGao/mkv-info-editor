@@ -34,6 +34,7 @@ declare global {
       writeFile: (filePath: string, content: string) => Promise<boolean>;
       deleteFile: (filePath: string) => Promise<boolean>;
       updateMetadata: (originalMetadataPath: string, chapters: ChapterData[]) => Promise<string>;
+  generateMkvFile: (inputPath: string, mkvFileData: string, outputPath: string) => Promise<boolean>;
     };
     ipcRenderer: {
       on: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: unknown[]) => void) => void;

@@ -103,14 +103,8 @@ const saveChanges = async () => {
   }
 
   try {
-    appStore.setProcessing(true, "正在生成新的元数据文件...");
+    appStore.setProcessing(true, "正在准备生成新的MKV文件...");
     appStore.resetFFmpegProgress();
-
-    // 确保类型匹配
-    const newMetadataPath = await window.electronAPI.updateMetadata(
-      appStore.mkvFile.metadata,
-      appStore.mkvFile.chapters
-    );
 
     // 选择输出文件路径
     appStore.setProcessingMessage("正在选择输出文件...");
@@ -122,17 +116,20 @@ const saveChanges = async () => {
 
     if (!outputFilePath) {
       appStore.setProcessing(false);
-      // 删除临时文件
-      await window.electronAPI.deleteFile(newMetadataPath);
       return;
     }
 
-    // 导入元数据
-    appStore.setProcessingMessage("正在导入元数据到MKV文件...");
+    // 生成新的MKV文件
+    appStore.setProcessingMessage("正在生成新的MKV文件...");
     appStore.updateFFmpegProgress(0);
-    await window.electronAPI.importMetadata(
+
+    // 转换为JSON字符串
+    const mkvFileJson = JSON.stringify(appStore.mkvFile);
+
+    // 调用新的generateMkvFile方法，传递JSON字符串
+    await window.electronAPI.generateMkvFile(
       appStore.mkvFile.filePath,
-      newMetadataPath,
+      mkvFileJson,
       outputFilePath
     );
 
@@ -140,9 +137,6 @@ const saveChanges = async () => {
       message: "章节信息已成功保存到新的MKV文件！",
       type: "success",
     });
-
-    // 清理临时文件
-    await window.electronAPI.deleteFile(newMetadataPath);
   } catch (error) {
     console.error("Error saving changes:", error);
     ElMessage({
