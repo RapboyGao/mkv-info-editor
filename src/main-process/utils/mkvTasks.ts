@@ -9,8 +9,6 @@ export type MKVTaskStatus = 'pending' | 'processing' | 'completed' | 'failed';
  * MKV任务接口，继承自MkvFile，并添加任务管理相关的属性和方法
  */
 export class MKVTask extends MkvFile {
-  // 任务ID
-  id: string;
   // 任务状态
   status: MKVTaskStatus;
   // 创建时间
@@ -33,7 +31,6 @@ export class MKVTask extends MkvFile {
    */
   constructor(mkvFileData: MkvFileData, mainWindow?: BrowserWindow) {
     super(mkvFileData);
-    this.id = `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     this.status = 'pending';
     this.createdAt = new Date();
     this.updatedAt = new Date();
