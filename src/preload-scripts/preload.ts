@@ -2,7 +2,7 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 import { contextBridge, ipcRenderer } from 'electron';
-import { Chapter } from '../shared/types';
+import { ChapterData } from '../shared/types';
 
 // 定义IPC通信接口
 export interface IpcApi {
@@ -22,8 +22,8 @@ export interface IpcApi {
   deleteFile: (filePath: string) => Promise<boolean>;
   
   // 元数据操作
-  parseMetadata: (metadataPath: string, totalDuration?: number) => Promise<Chapter[]>;
-  updateMetadata: (originalMetadataPath: string, chapters: Chapter[]) => Promise<string>;
+  parseMetadata: (metadataPath: string, totalDuration?: number) => Promise<ChapterData[]>;
+  updateMetadata: (originalMetadataPath: string, chapters: ChapterData[]) => Promise<string>;
 }
 
 // 暴露API给渲染进程

@@ -139,7 +139,7 @@ const formatDuration = (seconds: number): string => {
 
 // 保存时间编辑
 const resortChapters = () => {
-  appStore.chapters.sort((a, b) => a.startTime - b.startTime);
+  appStore.chapters.sort((a, b) => a.start - b.start);
 };
 
 // 取消时间编辑
@@ -156,13 +156,10 @@ const addChapter = () => {
     // 如果没有章节，添加第一个章节
     appStore.chapters.push({
       id: generateId(),
-      time: "00:00:00.000",
-      endTime: formatDuration(appStore.totalDuration),
+      start: 0,
+      end: appStore.totalDuration * 1000, // 转换为毫秒
       title: "新章节",
       originalTitle: "新章节",
-      startTime: 0,
-      startTimeSeconds: 0,
-      endTimeSeconds: appStore.totalDuration,
     });
   } else {
     // 获取最后一个章节
@@ -171,18 +168,11 @@ const addChapter = () => {
     // 添加新章节，开始时间为上一个章节的结束时间
     appStore.chapters.push({
       id: generateId(),
-      time: lastChapter.endTime,
-      endTime: formatDuration(appStore.totalDuration),
+      start: lastChapter.end,
+      end: appStore.totalDuration * 1000, // 转换为毫秒
       title: "新章节",
       originalTitle: "新章节",
-      startTime: lastChapter.endTimeSeconds * 1000, // 假设timebase为1000
-      startTimeSeconds: lastChapter.endTimeSeconds,
-      endTimeSeconds: appStore.totalDuration,
     });
-
-    // 更新上一个章节的结束时间
-    appStore.chapters[appStore.chapters.length - 2].endTime =
-      lastChapter.endTime;
   }
 
   resortChapters();
@@ -202,21 +192,19 @@ const deleteChapter = (index: number) => {
   appStore.chapters.splice(index, 1);
 
   // 按开始时间重新排序
-  appStore.chapters.sort((a, b) => a.startTime - b.startTime);
+  appStore.chapters.sort((a, b) => a.start - b.start);
 
-  // 更新相邻章节的时间
+  // 更新相邻章节的结束时间
   for (let i = 0; i < appStore.chapters.length; i++) {
     const currentChapter = appStore.chapters[i];
     const nextChapter = appStore.chapters[i + 1];
 
     if (nextChapter) {
       // 如果有下一个章节，当前章节的结束时间就是下一个章节的开始时间
-      currentChapter.endTime = nextChapter.time;
-      currentChapter.endTimeSeconds = nextChapter.startTimeSeconds;
+      currentChapter.end = nextChapter.start;
     } else {
-      // 最后一个章节，结束时间设置为MKV文件的总时长
-      currentChapter.endTime = formatDuration(appStore.totalDuration);
-      currentChapter.endTimeSeconds = appStore.totalDuration;
+      // 最后一个章节，结束时间设置为MKV文件的总时长（转换为毫秒）
+      currentChapter.end = appStore.totalDuration * 1000;
     }
   }
 };
@@ -238,12 +226,10 @@ const saveChanges = async () => {
     // 更新元数据文件 - 将响应式对象转换为普通对象，避免IPC序列化错误
     const plainChapters = appStore.chapters.map((chapter) => ({
       id: chapter.id,
-      time: chapter.time,
-      endTime: chapter.endTime,
+      start: chapter.start,
+      end: chapter.end,
       title: chapter.title,
       originalTitle: chapter.originalTitle,
-      startTime: chapter.startTime,
-      endTimeSeconds: chapter.endTimeSeconds,
     }));
     const newMetadataPath = await window.electronAPI.updateMetadata(
       appStore.metadataPath,

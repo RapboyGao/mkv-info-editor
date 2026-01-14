@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 触发编辑的链接 -->
-    <el-link type="primary" @click="openModal">{{ localChapter.time }}</el-link>
+    <el-link type="primary" @click="openModal">{{ chapterInstance.time }}</el-link>
 
     <!-- 全屏编辑模态框 -->
     <el-dialog
@@ -63,7 +63,7 @@
 
           <el-form-item label="当前时间预览">
             <div class="time-preview">
-              <h3>{{ localChapter.time }}</h3>
+              <h3>{{ chapterInstance.time }}</h3>
             </div>
           </el-form-item>
 
@@ -99,13 +99,14 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useAppStore } from "../stores/appStore";
 import { ElMessage } from "element-plus";
 import { Check, Close } from "@element-plus/icons-vue";
-import type { Chapter } from "../../shared/types";
+import type { ChapterData } from "../../shared/types";
+import { Chapter } from "../../shared/types";
 
 const appStore = useAppStore();
 
 // Props
 const props = defineProps<{
-  chapter: Chapter;
+  chapter: ChapterData;
   chapterIndex: number;
 }>();
 
@@ -128,7 +129,10 @@ const totalDurationFormatted = computed(() => {
 const maxHours = computed(() => Math.floor(totalDuration / 3600));
 
 // Local copy of the chapter
-const localChapter = ref<Chapter>({ ...props.chapter });
+const localChapter = ref<ChapterData>({ ...props.chapter });
+
+// Chapter instance for accessing calculated properties
+const chapterInstance = computed(() => new Chapter(localChapter.value));
 
 // Time parts
 const hours = ref(0);
@@ -161,7 +165,9 @@ const secondsToTimeString = (seconds: number): string => {
 
 // Update time parts from chapter time
 const updatePartsFromTime = () => {
-  const parts = timeStringToParts(localChapter.value.time);
+  // Create a Chapter instance to get the time string
+  const chapterInstance = new Chapter(localChapter.value);
+  const parts = timeStringToParts(chapterInstance.time);
   hours.value = parts.hours;
   minutes.value = parts.minutes;
   seconds.value = parts.seconds;
@@ -186,12 +192,8 @@ const updateTimeFromParts = () => {
     isTimeOverLimit.value = false;
   }
 
-  // Update chapter time properties
-  const timeStr = secondsToTimeString(totalSeconds);
-
-  localChapter.value.time = timeStr;
-  localChapter.value.startTimeSeconds = totalSeconds;
-  localChapter.value.startTime = totalSeconds * 1000; // 假设timebase为1000
+  // Update chapter start property (in milliseconds)
+  localChapter.value.start = totalSeconds * 1000;
 };
 
 // Open the modal
@@ -213,7 +215,7 @@ const save = () => {
   appStore.chapters[props.chapterIndex] = { ...localChapter.value };
 
   // Sort chapters by start time
-  appStore.chapters.sort((a, b) => a.startTime - b.startTime);
+  appStore.chapters.sort((a, b) => a.start - b.start);
 
   // Update all chapters' end times
   for (let i = 0; i < appStore.chapters.length; i++) {
@@ -222,12 +224,10 @@ const save = () => {
 
     if (nextChapter) {
       // If there's a next chapter, end time is next chapter's start time
-      currentChapter.endTime = nextChapter.time;
-      currentChapter.endTimeSeconds = nextChapter.startTimeSeconds;
+      currentChapter.end = nextChapter.start;
     } else {
-      // Last chapter, end time is total duration
-      currentChapter.endTime = secondsToTimeString(totalDuration);
-      currentChapter.endTimeSeconds = totalDuration;
+      // Last chapter, end time is total duration (in milliseconds)
+      currentChapter.end = totalDuration * 1000;
     }
   }
 

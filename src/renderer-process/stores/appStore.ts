@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { Chapter } from '../../shared/types';
+import { ChapterData, Chapter } from '../../shared/types';
 
 export const useAppStore = defineStore('app', {
   state: () => ({
@@ -10,7 +10,7 @@ export const useAppStore = defineStore('app', {
     // 文件和章节信息
     selectedFilePath: null as string | null,
     metadataPath: null as string | null,
-    chapters: [] as Chapter[],
+    chapters: [] as ChapterData[],
     totalDuration: 100 * 3600, // 默认100小时，实际会被替换为真实时长
     
     // 状态管理
@@ -45,7 +45,7 @@ export const useAppStore = defineStore('app', {
     },
     
     // 设置章节列表
-    setChapters(chapters: Chapter[]) {
+    setChapters(chapters: ChapterData[]) {
       this.chapters = chapters;
     },
     
