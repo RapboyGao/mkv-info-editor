@@ -89,9 +89,9 @@ const downloadFFmpeg = async () => {
   }
 };
 
-// 跳转到选择文件页面
+// 跳转到文件编辑器页面
 const goToFileSelection = () => {
-  router.push('/file-select');
+  router.push('/file-editor');
 };
 
 // 组件挂载时自动下载FFmpeg

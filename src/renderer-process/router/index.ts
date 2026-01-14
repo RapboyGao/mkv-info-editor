@@ -1,8 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import { useAppStore } from '../stores/appStore';
 import FFmpegDownload from '../pages/FFmpegDownload.vue';
-import FileSelection from '../pages/FileSelection.vue';
-import ChapterEditor from '../pages/ChapterEditor.vue';
+import FileEditor from '../pages/FileEditor.vue';
 
 const routes = [
   {
@@ -15,20 +14,11 @@ const routes = [
     }
   },
   {
-    path: '/file-select',
-    name: 'file-select',
-    component: FileSelection,
+    path: '/file-editor',
+    name: 'file-editor',
+    component: FileEditor,
     meta: {
-      title: '选择 MKV 文件',
-      requiresFFmpeg: true
-    }
-  },
-  {
-    path: '/chapter-editor',
-    name: 'chapter-editor',
-    component: ChapterEditor,
-    meta: {
-      title: '编辑章节信息',
+      title: 'MKV 文件编辑器',
       requiresFFmpeg: true
     }
   }

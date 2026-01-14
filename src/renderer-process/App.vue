@@ -56,8 +56,8 @@ const handleFFmpegComplete = () => {
     type: 'success'
   });
   
-  // 跳转到选择文件页面
-  router.push('/file-select');
+  // 跳转到文件编辑器页面
+  router.push('/file-editor');
 };
 
 // 处理FFmpeg下载错误
