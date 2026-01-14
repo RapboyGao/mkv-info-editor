@@ -1,11 +1,17 @@
 <template>
   <div class="app-container">
     <header class="app-header">
-      <h1>{{ t("app.title") }}</h1>
-      <el-select v-model="currentLocale" @change="switchLanguage" size="small">
-        <el-option label="English" value="en" />
-        <el-option label="中文" value="zh" />
-      </el-select>
+      <el-menu mode="horizontal" background-color="#fff" text-color="#303133" active-text-color="#409EFF" border-bottom="0">
+        <el-menu-item index="title" class="menu-title">
+          <h1>{{ t("app.title") }}</h1>
+        </el-menu-item>
+        <el-menu-item index="language" class="menu-language">
+          <el-select v-model="currentLocale" @change="switchLanguage" size="small">
+            <el-option label="English" value="en" />
+            <el-option label="中文" value="zh" />
+          </el-select>
+        </el-menu-item>
+      </el-menu>
     </header>
 
     <main class="app-main">
@@ -128,21 +134,32 @@ onBeforeUnmount(() => {
 .app-header {
   background-color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   width: 100%;
   box-sizing: border-box;
   margin: 0;
 }
 
-.app-header h1 {
+.app-header :deep(.el-menu) {
+  border-bottom: none;
+}
+
+.menu-title {
+  flex: 1;
+  justify-content: center !important;
+}
+
+.menu-title h1 {
   color: #303133;
   font-size: 24px;
   margin: 0;
-  padding: 20px 0;
+  padding: 0;
   text-align: center;
+}
+
+.menu-language {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
 }
 
 .app-main {
