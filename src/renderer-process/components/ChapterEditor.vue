@@ -214,8 +214,7 @@ const saveChanges = async () => {
       start: chapter.start,
       end: chapter.end,
       title: chapter.title,
-      originalTitle: chapter.originalTitle,
-      timeBase: chapter.timeBase
+      originalTitle: chapter.originalTitle
     }));
     const newMetadataPath = await window.electronAPI.updateMetadata(
       appStore.mkvFile.metadata,
